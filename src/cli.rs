@@ -102,11 +102,15 @@ impl Cli {
                 println!("  Compression ratio: {:.1}%", stats.compression_ratio);
                 if stats.total_uncompressed_size > 0 {
                     if stats.total_uncompressed_size > stats.total_compressed_size {
-                        let space_saved = stats.total_uncompressed_size - stats.total_compressed_size;
+                        let space_saved =
+                            stats.total_uncompressed_size - stats.total_compressed_size;
                         println!("  Space saved: {space_saved} bytes");
                     } else {
-                        let space_increased = stats.total_compressed_size - stats.total_uncompressed_size;
-                        println!("  Space increased: {space_increased} bytes (due to compression overhead)");
+                        let space_increased =
+                            stats.total_compressed_size - stats.total_uncompressed_size;
+                        println!(
+                            "  Space increased: {space_increased} bytes (due to compression overhead)"
+                        );
                     }
                 }
             }
@@ -287,9 +291,7 @@ mod tests {
 
         // Test hash command
         let cli = Cli {
-            command: Commands::Hash {
-                file: test_file,
-            },
+            command: Commands::Hash { file: test_file },
         };
 
         cli.run()?;

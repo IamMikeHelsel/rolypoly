@@ -1,0 +1,43 @@
+{
+  "rust-analyzer.checkOnSave.command": "clippy",
+  "rust-analyzer.cargo.buildScripts.enable": true,
+  "rust-analyzer.procMacro.enable": true,
+  "rust-analyzer.diagnostics.enable": true,
+  "rust-analyzer.inlayHints.enable": true,
+  "rust-analyzer.completion.autoimport.enable": true,
+  "rust-analyzer.hover.actions.enable": true,
+  
+  "[rust]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "rust-lang.rust-analyzer",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.rulers": [100]
+  },
+  
+  "[toml]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "tamasfe.even-better-toml"
+  },
+  
+  "files.watcherExclude": {
+    "**/target/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true
+  },
+  
+  "search.exclude": {
+    "**/target": true,
+    "**/Cargo.lock": true
+  },
+  
+  "files.associations": {
+    "*.slint": "slint"
+  },
+  
+  "slint.lsp-args": [
+    "--preview-features",
+    "backend-linker"
+  ]
+}

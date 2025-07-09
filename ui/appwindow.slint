@@ -1,4 +1,4 @@
-import { Button, VerticalBox, HorizontalBox, ListView, CheckBox, Canvas, Pen, PenLineCap } from "std-widgets.slint";
+import { Button, VerticalBox, HorizontalBox, ListView, CheckBox } from "std-widgets.slint";
 
 export struct FileEntry {
     name: string,
@@ -48,12 +48,6 @@ component ToolbarButton inherits TouchArea {
 }
 
 export component AppWindow inherits Window {
-    key-pressed(event) => {
-        if (event.text == "\u000F" && open_button_enabled) { // Ctrl+O
-            open_archive();
-            event.accept();
-        }
-    }
     title: "Rusty";
     preferred-width: 1000px;
     preferred-height: 700px;
@@ -107,19 +101,6 @@ export component AppWindow inherits Window {
                 border-color: #4a90e2;
                 animate border-width { duration: 150ms; }
 
-                accept-drop: true;
-                drop(event) => {
-                    if(event.mime-data.has-urls()) {
-                        root.files_dropped(event.mime-data.urls);
-                    }
-                    root.drop_has_focus = false;
-                }
-                drag-enter(event) => {
-                    root.drop_has_focus = event.mime-data.has-urls();
-                }
-                drag-leave(event) => {
-                    root.drop_has_focus = false;
-                }
 
                 VerticalBox {
                     padding: 20px;
@@ -210,16 +191,19 @@ export component AppWindow inherits Window {
                     Text { text: "Archive info"; color: #ffffff; font-weight: 600; font-size: 16px; }
 
                     // Donut chart
-                    Canvas {
+                    Rectangle {
                         width: 180px;
                         height: 180px;
-
-                        draw => {
-                            background_pen := Pen { color: #1a1a1a, width: 20px };
-                            self.draw_arc(10px, 10px, 160px, 160px, 0deg, 360deg, background_pen);
-
-                            foreground_pen := Pen { color: #4a90e2, width: 20px, line_cap: PenLineCap.Round };
-                            self.draw_arc(10px, 10px, 160px, 160px, -90deg, archive_info.compression_ratio * 360deg, foreground_pen);
+                        background: #1a1a1a;
+                        border-radius: 90px;
+                        
+                        Rectangle {
+                            width: 140px;
+                            height: 140px;
+                            background: #2a2a2a;
+                            border-radius: 70px;
+                            x: 20px;
+                            y: 20px;
                         }
                         
                         Text {

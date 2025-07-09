@@ -20,12 +20,12 @@ pub fn run_gui() -> Result<()> {
 
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
-    
+
     // Check for GUI mode
     if args.len() <= 1 || args.contains(&"--gui".to_string()) {
         return run_gui();
     }
-    
+
     // Otherwise, run CLI
     let cli_args = Cli::parse();
     cli_args.run()
