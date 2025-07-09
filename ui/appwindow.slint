@@ -1,7 +1,8 @@
-import { Button, VerticalBox, HorizontalBox, ListView } from "std-widgets.slint";
+import { Button, VerticalBox, HorizontalBox, ListView, CheckBox, Canvas, Pen, PenLineCap } from "std-widgets.slint";
 
 export struct FileEntry {
     name: string,
+    path: string,
     size: string,
     type: string,
     modified: string,
@@ -22,7 +23,37 @@ export enum AppState {
     extracting,
 }
 
+component ToolbarButton inherits TouchArea {
+    in property<string> icon;
+
+    width: 36px;
+    height: 36px;
+    mouse-cursor: self.enabled ? pointer : default;
+
+    Rectangle {
+        background: parent.enabled ? (parent.has-hover ? #444444 : #333333) : #2a2a2a;
+        border-radius: 6px;
+        border-width: 1px;
+        border-color: parent.enabled ? #555555 : #333333;
+        animate background { duration: 150ms; }
+
+        Text {
+            text: root.icon;
+            color: root.enabled ? #ffffff : #666666;
+            font-size: 16px;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+    }
+}
+
 export component AppWindow inherits Window {
+    key-pressed(event) => {
+        if (event.text == "\u000F" && open_button_enabled) { // Ctrl+O
+            open_archive();
+            event.accept();
+        }
+    }
     title: "Rusty";
     preferred-width: 1000px;
     preferred-height: 700px;
@@ -42,13 +73,14 @@ export component AppWindow inherits Window {
     in-out property<string> primary_button_text: "Compress";
     in-out property<bool> primary_button_enabled: false;
     in-out property<string> archive_name: "Archive.zip";
+    in-out property<bool> drop_has_focus: false;
+    in-out property<string> status_text: "Ready";
     
-    // Button states based on app state
     property<bool> add_button_enabled: app_state == AppState.empty || app_state == AppState.ready-archive;
     property<bool> open_button_enabled: app_state == AppState.empty || app_state == AppState.ready-archive;
     property<bool> copy_button_enabled: app_state == AppState.ready-archive;
     property<bool> share_button_enabled: app_state == AppState.ready-archive;
-    property<bool> settings_button_enabled: true;  // Always enabled
+    property<bool> settings_button_enabled: true;
     property<bool> tools_button_enabled: app_state == AppState.ready-archive;
 
     callback add_files();
@@ -58,418 +90,194 @@ export component AppWindow inherits Window {
     callback show_settings();
     callback show_tools();
     callback primary_action();
-    callback file_selected(int);
-    callback remove_selected_files();
+    callback toggle_selection(int);
+    callback files_dropped([string]);
 
-    HorizontalBox {
-        padding: 0px;
+    VerticalLayout {
         spacing: 0px;
+        HorizontalBox {
+            padding: 0px;
+            spacing: 0px;
 
-        // Left panel - File list
-        Rectangle {
-            background: #1a1a1a;
-            width: 60%;
+            // Left panel
+            Rectangle {
+                background: #1a1a1a;
+                width: 60%;
+                border-width: root.drop_has_focus ? 2px : 0px;
+                border-color: #4a90e2;
+                animate border-width { duration: 150ms; }
 
-            VerticalBox {
-                padding: 20px;
-                spacing: 15px;
-
-                // Toolbar
-                HorizontalBox {
-                    spacing: 8px;
-                    alignment: start;
-
-                    // B1: Add (+ icon) - Opens OS file picker, appends to file list
-                    Rectangle {
-                        width: 36px;
-                        height: 36px;
-                        background: add_button_enabled ? #333333 : #1a1a1a;
-                        border-radius: 6px;
-                        border-width: 1px;
-                        border-color: add_button_enabled ? #555555 : #2a2a2a;
-                        
-                        TouchArea {
-                            clicked => { 
-                                if (add_button_enabled) {
-                                    add_files(); 
-                                }
-                            }
-                        }
-                        
-                        Text {
-                            text: "+";
-                            color: add_button_enabled ? #ffffff : #666666;
-                            font-size: 20px;
-                            font-weight: 600;
-                            horizontal-alignment: center;
-                            vertical-alignment: center;
-                        }
+                accept-drop: true;
+                drop(event) => {
+                    if(event.mime-data.has-urls()) {
+                        root.files_dropped(event.mime-data.urls);
                     }
-
-                    // B2: Open (folder-arrow icon) - Opens archive, replaces view
-                    Rectangle {
-                        width: 36px;
-                        height: 36px;
-                        background: open_button_enabled ? #333333 : #1a1a1a;
-                        border-radius: 6px;
-                        border-width: 1px;
-                        border-color: open_button_enabled ? #555555 : #2a2a2a;
-                        
-                        TouchArea {
-                            clicked => { 
-                                if (open_button_enabled) {
-                                    open_archive(); 
-                                }
-                            }
-                        }
-                        
-                        Text {
-                            text: "📂";
-                            color: open_button_enabled ? #ffffff : #666666;
-                            font-size: 16px;
-                            horizontal-alignment: center;
-                            vertical-alignment: center;
-                        }
-                    }
-
-                    // B3: Copy Path (clipboard icon) - Copies archive or selected file paths
-                    Rectangle {
-                        width: 36px;
-                        height: 36px;
-                        background: copy_button_enabled ? #333333 : #1a1a1a;
-                        border-radius: 6px;
-                        border-width: 1px;
-                        border-color: copy_button_enabled ? #555555 : #2a2a2a;
-                        
-                        TouchArea {
-                            clicked => { 
-                                if (copy_button_enabled) {
-                                    copy_path(); 
-                                }
-                            }
-                        }
-                        
-                        Text {
-                            text: "📋";
-                            color: copy_button_enabled ? #ffffff : #666666;
-                            font-size: 16px;
-                            horizontal-alignment: center;
-                            vertical-alignment: center;
-                        }
-                    }
-
-                    // B4: Share (paper-plane icon) - OS share sheet
-                    Rectangle {
-                        width: 36px;
-                        height: 36px;
-                        background: share_button_enabled ? #333333 : #1a1a1a;
-                        border-radius: 6px;
-                        border-width: 1px;
-                        border-color: share_button_enabled ? #555555 : #2a2a2a;
-                        
-                        TouchArea {
-                            clicked => { 
-                                if (share_button_enabled) {
-                                    share(); 
-                                }
-                            }
-                        }
-                        
-                        Text {
-                            text: "✈";
-                            color: share_button_enabled ? #ffffff : #666666;
-                            font-size: 16px;
-                            horizontal-alignment: center;
-                            vertical-alignment: center;
-                        }
-                    }
-
-                    // B5: Settings (gear icon) - Global prefs: theme, compression level
-                    Rectangle {
-                        width: 36px;
-                        height: 36px;
-                        background: settings_button_enabled ? #333333 : #1a1a1a;
-                        border-radius: 6px;
-                        border-width: 1px;
-                        border-color: settings_button_enabled ? #555555 : #2a2a2a;
-                        
-                        TouchArea {
-                            clicked => { 
-                                if (settings_button_enabled) {
-                                    show_settings(); 
-                                }
-                            }
-                        }
-                        
-                        Text {
-                            text: "⚙";
-                            color: settings_button_enabled ? #ffffff : #666666;
-                            font-size: 16px;
-                            horizontal-alignment: center;
-                            vertical-alignment: center;
-                        }
-                    }
-
-                    // B6: Tools (gear-with-wrench icon) - Power-user tools
-                    Rectangle {
-                        width: 36px;
-                        height: 36px;
-                        background: tools_button_enabled ? #333333 : #1a1a1a;
-                        border-radius: 6px;
-                        border-width: 1px;
-                        border-color: tools_button_enabled ? #555555 : #2a2a2a;
-                        
-                        TouchArea {
-                            clicked => { 
-                                if (tools_button_enabled) {
-                                    show_tools(); 
-                                }
-                            }
-                        }
-                        
-                        Text {
-                            text: "🔧";
-                            color: tools_button_enabled ? #ffffff : #666666;
-                            font-size: 16px;
-                            horizontal-alignment: center;
-                            vertical-alignment: center;
-                        }
-                    }
+                    root.drop_has_focus = false;
                 }
-
-                // Archive name header
-                HorizontalBox {
-                    Text {
-                        text: archive_name;
-                        color: #ffffff;
-                        font-size: 16px;
-                        font-weight: 600;
-                    }
+                drag-enter(event) => {
+                    root.drop_has_focus = event.mime-data.has-urls();
                 }
-
-                // File table
-                Rectangle {
-                    background: #2a2a2a;
-                    border-radius: 8px;
-
-                    VerticalBox {
-                        padding: 0px;
-                        spacing: 0px;
-
-                        // Table header
-                        Rectangle {
-                            height: 35px;
-                            background: #333333;
-                            border-radius: 8px;
-
-                            HorizontalBox {
-                                padding: 15px;
-                                spacing: 20px;
-
-                                Text {
-                                    text: "Name";
-                                    color: #bbbbbb;
-                                    font-size: 12px;
-                                    width: 35%;
-                                }
-                                Text {
-                                    text: "Size";
-                                    color: #bbbbbb;
-                                    font-size: 12px;
-                                    width: 15%;
-                                }
-                                Text {
-                                    text: "Type";
-                                    color: #bbbbbb;
-                                    font-size: 12px;
-                                    width: 25%;
-                                }
-                                Text {
-                                    text: "Modified";
-                                    color: #bbbbbb;
-                                    font-size: 12px;
-                                    width: 25%;
-                                }
-                            }
-                        }
-
-                        // File list
-                        ListView {
-                            for file[i] in files: Rectangle {
-                                height: 35px;
-                                background: file.selected ? #4d6fa8 : (Math.mod(i, 2) == 0 ? #2a2a2a : #2e2e2e);
-
-                                TouchArea {
-                                    clicked => { file_selected(i); }
-                                }
-
-                                HorizontalBox {
-                                    padding: 15px;
-                                    spacing: 20px;
-
-                                    HorizontalBox {
-                                        width: 35%;
-                                        spacing: 8px;
-                                        
-                                        // File icon based on type
-                                        Rectangle {
-                                            width: 16px;
-                                            height: 16px;
-                                            background: file.type == "Folder" ? #ffa500 : 
-                                                       file.type == "PDF" ? #ff4444 : 
-                                                       file.type == "MPEG" ? #44ff44 : 
-                                                       file.type == "PNG" ? #ff44ff : 
-                                                       #4a90e2;
-                                            border-radius: 3px;
-                                            
-                                            Text {
-                                                text: file.type == "Folder" ? "📁" : 
-                                                     file.type == "PDF" ? "📄" : 
-                                                     file.type == "MPEG" ? "🎬" : 
-                                                     file.type == "PNG" ? "🖼" : 
-                                                     "📄";
-                                                color: #ffffff;
-                                                font-size: 10px;
-                                                horizontal-alignment: center;
-                                                vertical-alignment: center;
-                                            }
-                                        }
-                                        
-                                        Text {
-                                            text: file.name;
-                                            color: #ffffff;
-                                            font-size: 13px;
-                                            vertical-alignment: center;
-                                        }
-                                    }
-                                    
-                                    Text {
-                                        text: file.size;
-                                        color: #cccccc;
-                                        font-size: 13px;
-                                        width: 15%;
-                                        vertical-alignment: center;
-                                    }
-                                    Text {
-                                        text: file.type;
-                                        color: #cccccc;
-                                        font-size: 13px;
-                                        width: 25%;
-                                        vertical-alignment: center;
-                                    }
-                                    Text {
-                                        text: file.modified;
-                                        color: #cccccc;
-                                        font-size: 13px;
-                                        width: 25%;
-                                        vertical-alignment: center;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Output path
-                Text {
-                    text: "Machine.zip";
-                    color: #888888;
-                    font-size: 12px;
-                }
-            }
-        }
-
-        // Right panel - Archive info
-        Rectangle {
-            background: #2a2a2a;
-            width: 40%;
-
-            VerticalBox {
-                padding: 25px;
-                spacing: 25px;
-                alignment: start;
-
-                Text {
-                    text: "Archive info";
-                    color: #ffffff;
-                    font-weight: 600;
-                    font-size: 16px;
-                }
-
-                // Archive size donut chart (simplified)
-                Rectangle {
-                    width: 160px;
-                    height: 160px;
-                    border-radius: 80px;
-                    border-width: 20px;
-                    border-color: #4a90e2;
-                    background: #1a1a1a;
-                    
-                    Text {
-                        text: archive_info.total_size;
-                        color: #ffffff;
-                        font-size: 20px;
-                        font-weight: 700;
-                        horizontal-alignment: center;
-                        vertical-alignment: center;
-                    }
+                drag-leave(event) => {
+                    root.drop_has_focus = false;
                 }
 
                 VerticalBox {
+                    padding: 20px;
                     spacing: 15px;
 
+                    // Toolbar
                     HorizontalBox {
-                        Text {
-                            text: "Compression:";
-                            color: #bbbbbb;
-                            font-size: 13px;
-                            width: 100px;
-                        }
-                        Text {
-                            text: Math.round(archive_info.compression_ratio * 100) + "%";
-                            color: #ffffff;
-                            font-size: 13px;
-                        }
+                        spacing: 10px;
+                        alignment: start;
+                        ToolbarButton { icon: "+"; enabled: add_button_enabled; clicked => { add_files(); } }
+                        ToolbarButton { icon: "📂"; enabled: open_button_enabled; clicked => { open_archive(); } }
+                        ToolbarButton { icon: "📋"; enabled: copy_button_enabled; clicked => { copy_path(); } }
+                        ToolbarButton { icon: "✈"; enabled: share_button_enabled; clicked => { share(); } }
+                        ToolbarButton { icon: "⚙"; enabled: settings_button_enabled; clicked => { show_settings(); } }
+                        ToolbarButton { icon: "🔧"; enabled: tools_button_enabled; clicked => { show_tools(); } }
                     }
 
-                    HorizontalBox {
-                        Text {
-                            text: "Encryption:";
-                            color: #bbbbbb;
-                            font-size: 13px;
-                            width: 100px;
-                        }
-                        Text {
-                            text: archive_info.encryption;
-                            color: #ffffff;
-                            font-size: 13px;
-                        }
-                    }
-                }
+                    // File table
+                    Rectangle {
+                        background: #2a2a2a;
+                        border-radius: 8px;
+                        clip: true;
 
-                // Primary action button
-                Rectangle {
-                    height: 45px;
-                    background: primary_button_enabled ? #4a90e2 : #555555;
-                    border-radius: 8px;
-                    
-                    TouchArea {
-                        clicked => { 
-                            if (primary_button_enabled) {
-                                primary_action();
+                        VerticalBox {
+                            padding: 0px;
+                            spacing: 0px;
+
+                            // Table header
+                            Rectangle {
+                                height: 40px;
+                                background: #333333;
+                                HorizontalBox {
+                                    padding-left: 45px; 
+                                    padding-right: 15px;
+                                    spacing: 20px;
+                                    Text { text: "Name"; color: #bbbbbb; font-size: 12px; width: 35%; }
+                                    Text { text: "Size"; color: #bbbbbb; font-size: 12px; width: 15%; }
+                                    Text { text: "Type"; color: #bbbbbb; font-size: 12px; width: 25%; }
+                                    Text { text: "Modified"; color: #bbbbbb; font-size: 12px; width: 25%; }
+                                }
+                            }
+
+                            // File list
+                            ListView {
+                                for file[i] in files: Rectangle {
+                                    height: 38px;
+                                    background: file.selected ? #4a90e2 : (mod(i, 2) == 0 ? #2a2a2a : #2c2c2c);
+                                    TouchArea { clicked => { toggle_selection(i); } }
+
+                                    HorizontalBox {
+                                        padding: 15px;
+                                        spacing: 20px;
+                                        
+                                        CheckBox {
+                                            width: 20px;
+                                            checked: file.selected;
+                                            toggled => { toggle_selection(i); }
+                                        }
+
+                                        HorizontalBox {
+                                            width: 35%;
+                                            spacing: 8px;
+                                            Image { source: @image-url("../icons/icon.png"); width: 16px; height: 16px; }
+                                            Text { text: file.name; color: #ffffff; font-size: 13px; vertical-alignment: center; }
+                                        }
+                                        
+                                        Text { text: file.size; color: #cccccc; font-size: 13px; width: 15%; vertical-alignment: center; }
+                                        Text { text: file.type; color: #cccccc; font-size: 13px; width: 25%; vertical-alignment: center; }
+                                        Text { text: file.modified; color: #cccccc; font-size: 13px; width: 25%; vertical-alignment: center; }
+                                    }
+                                }
                             }
                         }
                     }
-                    
-                    Text {
-                        text: primary_button_text;
-                        color: #ffffff;
-                        font-size: 16px;
-                        font-weight: 600;
-                        horizontal-alignment: center;
-                        vertical-alignment: center;
+                }
+            }
+
+            // Right panel
+            Rectangle {
+                background: #2a2a2a;
+                width: 40%;
+
+                VerticalBox {
+                    padding: 25px;
+                    spacing: 25px;
+                    alignment: center;
+
+                    Text { text: "Archive info"; color: #ffffff; font-weight: 600; font-size: 16px; }
+
+                    // Donut chart
+                    Canvas {
+                        width: 180px;
+                        height: 180px;
+
+                        draw => {
+                            background_pen := Pen { color: #1a1a1a, width: 20px };
+                            self.draw_arc(10px, 10px, 160px, 160px, 0deg, 360deg, background_pen);
+
+                            foreground_pen := Pen { color: #4a90e2, width: 20px, line_cap: PenLineCap.Round };
+                            self.draw_arc(10px, 10px, 160px, 160px, -90deg, archive_info.compression_ratio * 360deg, foreground_pen);
+                        }
+                        
+                        Text {
+                            text: archive_info.total_size;
+                            color: #ffffff;
+                            font-size: 20px;
+                            font-weight: 700;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    VerticalBox {
+                        spacing: 15px;
+                        HorizontalBox {
+                            Text { text: "Compression:"; color: #bbbbbb; font-size: 13px; width: 100px; }
+                            Text { text: Math.round(archive_info.compression_ratio * 100) + "%"; color: #ffffff; font-size: 13px; }
+                        }
+                        HorizontalBox {
+                            Text { text: "Encryption:"; color: #bbbbbb; font-size: 13px; width: 100px; }
+                            Text { text: archive_info.encryption; color: #ffffff; font-size: 13px; }
+                        }
+                    }
+
+                    // Primary action button
+                    TouchArea {
+                        height: 45px;
+                        width: 100%;
+                        mouse-cursor: primary_button_enabled ? pointer : default;
+                        clicked => { if (primary_button_enabled) { primary_action(); } }
+                        
+                        Rectangle {
+                            background: primary_button_enabled ? (parent.has-hover ? #5aa0f2 : #4a90e2) : #555555;
+                            border-radius: 8px;
+                            animate background { duration: 150ms; }
+                            
+                            Text {
+                                text: primary_button_text;
+                                color: #ffffff;
+                                font-size: 16px;
+                                font-weight: 600;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
                     }
                 }
+            }
+        }
+        Rectangle { // Status bar
+            height: 24px;
+            background: #333333;
+            Text {
+                text: status_text;
+                color: #ffffff;
+                font-size: 12px;
+                padding-left: 10px;
+                vertical-alignment: center;
             }
         }
     }
