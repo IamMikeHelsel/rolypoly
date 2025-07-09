@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+</head>
+<body>
+    <canvas id="canvas" width="512" height="512" style="border: 1px solid black;"></canvas>
+    <br>
+    <button onclick="downloadIcon()">Download Icon</button>
+    
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Create a simple icon with "Rusty" text
+        function createIcon() {
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 512, 512);
+            
+            // Add rounded corners effect
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.beginPath();
+            ctx.roundRect(20, 20, 472, 472, 80);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // Add crab emoji
+            ctx.font = 'bold 180px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'white';
+            ctx.fillText('🦀', 256, 200);
+            
+            // Add "Rusty" text
+            ctx.font = 'bold 72px Arial';
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+            ctx.lineWidth = 4;
+            ctx.strokeText('Rusty', 256, 350);
+            ctx.fillText('Rusty', 256, 350);
+            
+            // Add subtitle
+            ctx.font = '32px Arial';
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.fillText('ZIP Archiver', 256, 400);
+        }
+        
+        function downloadIcon() {
+            const link = document.createElement('a');
+            link.download = 'app-icon.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        createIcon();
+    </script>
+</body>
+</html>

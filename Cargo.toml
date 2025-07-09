@@ -1,0 +1,50 @@
+[package]
+name = "rusty"
+version = "0.1.0"
+edition = "2024"
+description = "A modern, cross-platform ZIP archiver written in Rust"
+authors = ["Claude Code Assistant"]
+license = "MIT"
+homepage = "https://github.com/user/rusty"
+repository = "https://github.com/user/rusty"
+readme = "README.md"
+keywords = ["zip", "archive", "compression", "cli"]
+categories = ["command-line-utilities", "compression"]
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[dependencies]
+zip = "2.1"
+clap = { version = "4.5", features = ["derive"] }
+anyhow = "1.0"
+walkdir = "2.5"
+sha2 = "0.10"
+crc32fast = "1.4"
+indicatif = "0.17"
+tauri = { version = "2.0", features = [] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["full"] }
+rand = "0.8"
+
+[dev-dependencies]
+tempfile = "3.10"
+
+[[bench]]
+name = "performance_benchmark"
+harness = false
+
+[lib]
+name = "rusty"
+path = "src/lib.rs"
+
+[[bin]]
+name = "rusty"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }

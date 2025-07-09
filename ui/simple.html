@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rusty - ZIP Archiver</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+
+        .drop-zone {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 60px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .drop-zone-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .drop-zone h2 {
+            color: #555;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .drop-zone p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #b8daff;
+        }
+
+        .file-list {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .file-list.show {
+            display: block;
+        }
+
+        .file-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🦀 Rusty</h1>
+        
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-icon">📦</div>
+            <h2>Drop files here to create archive</h2>
+            <p>Or use the buttons below</p>
+        </div>
+
+        <input type="file" id="fileInput" class="hidden" multiple>
+
+        <div class="buttons">
+            <button class="btn" onclick="selectFiles()">📁 Select Files</button>
+            <button class="btn btn-secondary" onclick="openArchive()">📂 Open Archive</button>
+            <button class="btn btn-secondary" onclick="validateArchive()">✅ Validate</button>
+        </div>
+
+        <div class="status" id="status"></div>
+        <div class="file-list" id="fileList"></div>
+    </div>
+
+    <script>
+        const { invoke } = window.__TAURI__.tauri;
+        const { open } = window.__TAURI__.dialog;
+
+        let selectedFiles = [];
+        let currentArchive = null;
+
+        // Drag and drop
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(Array.from(e.dataTransfer.files));
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(Array.from(e.target.files));
+        });
+
+        function handleFiles(files) {
+            selectedFiles = files.map(file => file.path || file.name);
+            showStatus(`Selected ${files.length} files`, 'info');
+            createArchive();
+        }
+
+        async function selectFiles() {
+            try {
+                const selected = await open({
+                    multiple: true,
+                    title: 'Select files to archive'
+                });
+                
+                if (selected) {
+                    selectedFiles = Array.isArray(selected) ? selected : [selected];
+                    showStatus(`Selected ${selectedFiles.length} files`, 'info');
+                    createArchive();
+                }
+            } catch (error) {
+                showStatus(`Error: ${error}`, 'error');
+            }
+        }
+
+        async function createArchive() {
+            if (selectedFiles.length === 0) return;
+
+            try {
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const archiveName = `archive-${timestamp}.zip`;
+                
+                showStatus('Creating archive...', 'info');
+                
+                const result = await invoke('create_archive', {
+                    archivePath: archiveName,
+                    files: selectedFiles
+                });
+
+                showStatus(result.data, 'success');
+                
+            } catch (error) {
+                showStatus(error.error || `Error: ${error}`, 'error');
+            }
+        }
+
+        async function openArchive() {
+            try {
+                const selected = await open({
+                    filters: [{ name: 'ZIP Archives', extensions: ['zip'] }],
+                    title: 'Open ZIP archive'
+                });
+                
+                if (selected) {
+                    currentArchive = selected;
+                    showStatus('Reading archive...', 'info');
+                    
+                    const result = await invoke('list_archive', {
+                        archivePath: selected
+                    });
+
+                    showFileList(result.data);
+                    showStatus(`Archive contains ${result.data.length} files`, 'success');
+                }
+            } catch (error) {
+                showStatus(error.error || `Error: ${error}`, 'error');
+            }
+        }
+
+        async function validateArchive() {
+            if (!currentArchive) {
+                showStatus('Please open an archive first', 'error');
+                return;
+            }
+
+            try {
+                showStatus('Validating archive...', 'info');
+                
+                const result = await invoke('validate_archive', {
+                    archivePath: currentArchive
+                });
+
+                if (result.data) {
+                    showStatus('✅ Archive is valid!', 'success');
+                } else {
+                    showStatus('❌ Archive is corrupted', 'error');
+                }
+            } catch (error) {
+                showStatus(error.error || `Error: ${error}`, 'error');
+            }
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status show ${type}`;
+        }
+
+        function showFileList(files) {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = files.map(file => 
+                `<div class="file-item">📄 ${file}</div>`
+            ).join('');
+            fileList.classList.add('show');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await invoke('health_check');
+                console.log('Backend connected');
+            } catch (error) {
+                showStatus('Backend connection failed', 'error');
+            }
+        });
+    </script>
+</body>
+</html>

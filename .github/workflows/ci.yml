@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+          
+      - name: Run tests
+        run: cargo test --all-features
+        
+      - name: Run clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+        
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+  test-gui:
+    name: GUI Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libgtk-3-dev
+          
+      - name: Run GUI integration tests
+        run: cargo test --test gui_integration_tests
+        
+      - name: Run GUI stress tests
+        run: cargo test --test gui_stress_tests
+
+  build-check:
+    name: Build Check
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          
+      - name: Install system dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libgtk-3-dev
+          
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2.0"
+        
+      - name: Build CLI
+        run: cargo build --release --bin rusty
+        
+      - name: Build GUI (check only)
+        run: cargo tauri build --ci

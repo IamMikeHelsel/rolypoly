@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container settings-container">
+    <div class="tabs">
+      <button class="tab-button active" onclick="openTab(event, 'compression-options')">Compression</button>
+      <button class="tab-button" onclick="openTab(event, 'preferences')">Preferences</button>
+    </div>
+
+    <div id="compression-options" class="tab-content" style="display: block;">
+      <h3>Compression Options</h3>
+      <div class="form-group">
+        <label>Method: <span id="slider-value">Slow</span></label>
+        <input type="range" min="0" max="3" value="3" class="slider" id="compression-slider">
+        <div class="slider-labels">
+          <span>Store</span>
+          <span>Fast</span>
+          <span>Normal</span>
+          <span>Slow</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="split">Split:</label>
+        <select id="split" name="split">
+          <option>50 GB Blu-ray (DL)</option>
+          <option>25 GB Blu-ray</option>
+          <option>9 GB DVD (DL)</option>
+          <option>4.7 GB DVD</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" value="">
+      </div>
+      <div class="form-group">
+        <label for="repeat-password">Repeat:</label>
+        <input type="password" id="repeat-password" name="repeat-password" value="">
+      </div>
+      <div class="form-group checkbox-group">
+        <label><input type="checkbox" checked> Encrypt filenames</label>
+        <label><input type="checkbox" checked> Solid archive</label>
+        <label><input type="checkbox" checked> Exclude Mac resource forks</label>
+        <label><input type="checkbox" checked> Verify compression integrity</label>
+        <label><input type="checkbox"> Delete file(s) after compression</label>
+        <label><input type="checkbox"> Archive items separately</label>
+      </div>
+    </div>
+
+    <div id="preferences" class="tab-content">
+        <h3>Preferences</h3>
+        <div class="form-group">
+            <label for="default-format">Default format:</label>
+            <select id="default-format" name="default-format">
+                <option>ZIP</option>
+                <option>7Z</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="default-method">Default method:</label>
+            <select id="default-method" name="default-method">
+                <option>Normal</option>
+                <option>Fast</option>
+                <option>Slow</option>
+            </select>
+        </div>
+    </div>
+
+  </div>
+  <script src="script.js"></nscript>
+</body>
+</html>
