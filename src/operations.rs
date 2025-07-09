@@ -66,6 +66,7 @@ impl OperationManager {
             output: output.clone(),
             files: files.clone(),
         };
+        let output_clone = output.clone();
 
         // Run in blocking task to avoid blocking the async runtime
         let result = tokio::task::spawn_blocking(move || {
@@ -80,13 +81,14 @@ impl OperationManager {
             }
 
             // Perform actual archive creation
-            archive_manager.create_archive(&output, &files)
+            let file_refs: Vec<&PathBuf> = files.iter().collect();
+            archive_manager.create_archive(&output, &file_refs)
         })
         .await
         .map_err(|e| e.to_string())?;
 
         result
-            .map(|_| OperationResult::ArchiveCreated(output))
+            .map(|_| OperationResult::ArchiveCreated(output_clone))
             .map_err(|e| e.to_string())
     }
 
@@ -101,6 +103,7 @@ impl OperationManager {
             archive: archive.clone(),
             output: output.clone(),
         };
+        let output_clone = output.clone();
 
         let result = tokio::task::spawn_blocking(move || {
             // Simulate progress updates
@@ -120,7 +123,7 @@ impl OperationManager {
         .map_err(|e| e.to_string())?;
 
         result
-            .map(|_| OperationResult::ArchiveExtracted(output))
+            .map(|_| OperationResult::ArchiveExtracted(output_clone))
             .map_err(|e| e.to_string())
     }
 

@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use tokio::sync::broadcast;
@@ -14,7 +13,7 @@ pub enum AppEvent {
     StateChanged(AppState),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Operation {
     CreateArchive { output: PathBuf, files: Vec<PathBuf> },
     ExtractArchive { archive: PathBuf, output: PathBuf },
