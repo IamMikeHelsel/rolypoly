@@ -7,27 +7,15 @@ use clap::Parser;
 use cli::Cli;
 use std::env;
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run_gui() {
+pub fn run_gui() -> Result<()> {
     // Set up panic handler for GUI mode
     std::panic::set_hook(Box::new(|panic_info| {
         eprintln!("GUI panic occurred: {panic_info:?}");
         // Log but don't crash the GUI
     }));
 
-    tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![
-            gui::create_archive,
-            gui::extract_archive,
-            gui::list_archive,
-            gui::validate_archive,
-            gui::get_archive_stats,
-            gui::calculate_file_hash,
-            gui::get_app_info,
-            gui::health_check,
-        ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+    gui::run_gui()?;
+    Ok(())
 }
 
 fn main() -> Result<()> {
@@ -35,8 +23,7 @@ fn main() -> Result<()> {
     
     // Check for GUI mode
     if args.len() <= 1 || args.contains(&"--gui".to_string()) {
-        run_gui();
-        return Ok(());
+        return run_gui();
     }
     
     // Otherwise, run CLI
