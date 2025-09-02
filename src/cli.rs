@@ -61,6 +61,21 @@ pub enum Commands {
 
 impl Cli {
     pub fn run(self) -> Result<()> {
+        // Configure progress mode for archive manager via env vars
+        if self.progress {
+            std::env::set_var(
+                "ROLYPOLY_PROGRESS",
+                if self.json { "json" } else { "1" },
+            );
+        } else {
+            std::env::remove_var("ROLYPOLY_PROGRESS");
+        }
+        if self.json {
+            std::env::set_var("ROLYPOLY_JSON", "1");
+        } else {
+            std::env::remove_var("ROLYPOLY_JSON");
+        }
+
         let manager = ArchiveManager::new();
 
         match self.command {
