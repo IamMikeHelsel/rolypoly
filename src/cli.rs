@@ -4,7 +4,7 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "rusty")]
+#[command(name = "rolypoly")]
 #[command(about = "A modern ZIP archiver written in Rust")]
 #[command(version = "0.1.0")]
 pub struct Cli {

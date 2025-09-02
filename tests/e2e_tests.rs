@@ -1,4 +1,4 @@
-#![cfg(feature = "gui")]
+#![cfg(feature = "gui")] // No-op now that GUI is removed
 use std::fs;
 use std::process::Command;
 use tempfile::TempDir;

@@ -31,7 +31,7 @@ async fn test_cli_gui_parity_create_archive() -> Result<()> {
 
     // Create archive using GUI backend (ArchiveManager)
     let gui_archive = temp_dir.path().join("gui_archive.zip");
-    let archive_manager = rusty::archive::ArchiveManager::new();
+    let archive_manager = rolypoly::archive::ArchiveManager::new();
     archive_manager.create_archive(&gui_archive, &[&test_file])?;
 
     assert!(gui_archive.exists(), "GUI archive not created");
@@ -111,7 +111,7 @@ async fn test_cli_gui_parity_extract_archive() -> Result<()> {
     // Extract using GUI backend (ArchiveManager)
     let gui_extract_dir = temp_dir.path().join("gui_extract");
     fs::create_dir_all(&gui_extract_dir)?;
-    let archive_manager = rusty::archive::ArchiveManager::new();
+    let archive_manager = rolypoly::archive::ArchiveManager::new();
     archive_manager.extract_archive(&archive_path, &gui_extract_dir)?;
 
     // Compare extracted contents
@@ -153,7 +153,7 @@ async fn test_cli_gui_parity_validate_archive() -> Result<()> {
     let cli_success = cli_validate_output.status.success();
 
     // Validate using GUI backend (ArchiveManager)
-    let archive_manager = rusty::archive::ArchiveManager::new();
+    let archive_manager = rolypoly::archive::ArchiveManager::new();
     let gui_result = archive_manager.validate_archive(&archive_path);
 
     match (cli_success, gui_result) {
@@ -195,7 +195,7 @@ async fn test_cli_gui_parity_hash_calculation() -> Result<()> {
         .to_string();
 
     // Calculate hash using GUI backend (ArchiveManager)
-    let archive_manager = rusty::archive::ArchiveManager::new();
+    let archive_manager = rolypoly::archive::ArchiveManager::new();
     let gui_hash = archive_manager.calculate_file_hash(&test_file)?;
 
     assert_eq!(cli_hash, gui_hash, "CLI and GUI hash calculations differ");
@@ -230,7 +230,7 @@ async fn test_cli_gui_parity_large_file_handling() -> Result<()> {
 
     // Create archive using GUI backend
     let gui_archive = temp_dir.path().join("gui_large.zip");
-    let archive_manager = rusty::archive::ArchiveManager::new();
+    let archive_manager = rolypoly::archive::ArchiveManager::new();
     archive_manager.create_archive(&gui_archive, &[&large_file])?;
 
     // Extract both archives and compare
@@ -278,7 +278,7 @@ async fn test_cli_gui_parity_multiple_files() -> Result<()> {
 
     // Create archive using GUI backend
     let gui_archive = temp_dir.path().join("gui_multi.zip");
-    let archive_manager = rusty::archive::ArchiveManager::new();
+    let archive_manager = rolypoly::archive::ArchiveManager::new();
     let file_refs: Vec<&std::path::PathBuf> = files.iter().collect();
     archive_manager.create_archive(&gui_archive, &file_refs)?;
 

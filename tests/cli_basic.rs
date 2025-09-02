@@ -1,4 +1,4 @@
-use rusty::archive::ArchiveManager;
+use rolypoly::archive::ArchiveManager;
 use std::fs;
 use tempfile::TempDir;
 
@@ -47,4 +47,3 @@ fn create_list_extract_validate_and_hash() -> anyhow::Result<()> {
 
     Ok(())
 }
-

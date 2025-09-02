@@ -1,4 +1,4 @@
-#![cfg(feature = "gui")]
+#![cfg(feature = "gui")] // No-op: GUI removed; keeps file ignored
 use std::fs;
 use tempfile::TempDir;
 use tokio::process::Command as TokioCommand;

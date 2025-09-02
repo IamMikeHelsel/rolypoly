@@ -98,7 +98,7 @@ async fn test_concurrent_operations_stress() -> Result<()> {
 
             // Create archive in the shared temp directory
             let archive_path = temp_dir_path.join(format!("concurrent_{}.zip", i));
-            let archive_manager = rusty::archive::ArchiveManager::new();
+            let archive_manager = rolypoly::archive::ArchiveManager::new();
             archive_manager.create_archive(&archive_path, &[&file_path]).unwrap();
 
             // Validate each archive
