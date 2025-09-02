@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		}
+	],
+	"settings": {
+		"rust-analyzer.cargo.buildScripts.enable": true,
+		"rust-analyzer.procMacro.enable": true,
+		"rust-analyzer.diagnostics.enable": true,
+		"rust-analyzer.completion.autoimport.enable": true,
+		"rust-analyzer.hover.actions.enable": true,
+		"files.associations": {
+			"*.slint": "slint"
+		},
+		"slint.lsp-args": [
+			"--preview-features",
+			"backend-linker"
+		]
+	}
+}

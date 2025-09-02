@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "→ Running pre-commit checks..."
+
+# Rust format/lint/test
+echo "  • Rust: fmt"
+cargo fmt --all -- --check
+
+echo "  • Rust: clippy"
+cargo clippy --all-targets -- -D warnings
+
+echo "  • Rust: tests"
+cargo test --all
+
+# Flutter format/analyze/test if gui exists
+if [ -d "gui" ]; then
+  echo "  • Flutter: format"
+  (cd gui && dart format --set-exit-if-changed .)
+  echo "  • Flutter: analyze"
+  (cd gui && flutter analyze)
+  echo "  • Flutter: tests"
+  (cd gui && flutter test)
+fi
+
+echo "✓ Pre-commit checks passed"
+
