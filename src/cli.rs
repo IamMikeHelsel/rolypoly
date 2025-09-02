@@ -170,6 +170,8 @@ mod tests {
 
         // Test create command
         let cli = Cli {
+            json: false,
+            progress: false,
             command: Commands::Create {
                 archive: archive_path.clone(),
                 files: vec![test_file],
@@ -202,6 +204,8 @@ mod tests {
 
         // Test extract command
         let cli = Cli {
+            json: false,
+            progress: false,
             command: Commands::Extract {
                 archive: archive_path,
                 output: extract_dir.clone(),
@@ -233,6 +237,8 @@ mod tests {
 
         // Test list command
         let cli = Cli {
+            json: false,
+            progress: false,
             command: Commands::List {
                 archive: archive_path,
             },
@@ -251,6 +257,8 @@ mod tests {
         let archive_path = temp_dir.path().join("test.zip");
 
         let cli = Cli {
+            json: false,
+            progress: false,
             command: Commands::Create {
                 archive: archive_path,
                 files: vec![],
@@ -276,6 +284,8 @@ mod tests {
 
         // Test validate command
         let cli = Cli {
+            json: false,
+            progress: false,
             command: Commands::Validate {
                 archive: archive_path,
             },
@@ -299,6 +309,8 @@ mod tests {
 
         // Test stats command
         let cli = Cli {
+            json: false,
+            progress: false,
             command: Commands::Stats {
                 archive: archive_path,
             },
@@ -319,6 +331,8 @@ mod tests {
 
         // Test hash command
         let cli = Cli {
+            json: false,
+            progress: false,
             command: Commands::Hash { file: test_file },
         };
 
