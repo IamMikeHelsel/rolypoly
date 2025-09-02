@@ -24,3 +24,29 @@ target
 # Added by cargo
 
 /target
+
+# Flutter / Dart
+gui/.dart_tool/
+gui/.packages
+gui/.flutter-plugins
+gui/.flutter-plugins-dependencies
+gui/.metadata
+gui/build/
+gui/ios/
+gui/android/
+gui/windows/
+gui/macos/
+gui/linux/
+gui/web/
+
+# Node / web helpers (if any future tooling)
+node_modules/
+dist/
+
+# OS/editor junk
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json

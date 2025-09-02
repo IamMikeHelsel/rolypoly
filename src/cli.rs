@@ -1,4 +1,5 @@
 use crate::archive::ArchiveManager;
+use crate::progress;
 use anyhow::Result;
 use clap::{ArgAction, Parser, Subcommand};
 use serde::Serialize;
@@ -61,6 +62,11 @@ pub enum Commands {
 
 impl Cli {
     pub fn run(self) -> Result<()> {
+        // Configure output mode for downstream operations
+        // Default: human progress bars enabled; JSON progress only when both --json and --progress are set.
+        let progress = if self.json { self.progress } else { true };
+        progress::set_output_mode(self.json, progress);
+
         let manager = ArchiveManager::new();
 
         match self.command {

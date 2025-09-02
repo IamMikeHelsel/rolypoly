@@ -32,6 +32,28 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Determine relevant changes (CLI paths)
+      id: changes
+      shell: bash
+      run: |
+        set -euo pipefail
+        # Find previous CLI tag (excluding current)
+        CURRENT_TAG="${GITHUB_REF_NAME}"
+        PREV_TAG=$(git tag --list 'cli-v*' --sort=-v:refname | grep -v "^${CURRENT_TAG}$" | head -n1 || true)
+        echo "current=${CURRENT_TAG}" >> $GITHUB_OUTPUT
+        echo "previous=${PREV_TAG}" >> $GITHUB_OUTPUT
+        if [[ -z "$PREV_TAG" ]]; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        CHANGED=$(git diff --name-only "$PREV_TAG"..."$CURRENT_TAG" | \
+          grep -E '^(src/|Cargo.toml|benches/|tests/|scripts/)' | grep -v '^gui/' | wc -l | xargs)
+        if [[ "$CHANGED" != "0" ]]; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+        else
+          echo "changed=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
@@ -40,12 +62,15 @@ jobs:
         default: true
 
     - name: Build
+      if: steps.changes.outputs.changed == 'true'
       run: cargo build --release --target ${{ matrix.target }} --bin rolypoly
 
     - name: Run tests
+      if: steps.changes.outputs.changed == 'true'
       run: cargo test --release --target ${{ matrix.target }}
 
     - name: Package binary
+      if: steps.changes.outputs.changed == 'true'
       shell: bash
       run: |
         cd target/${{ matrix.target }}/release
@@ -56,6 +81,7 @@ jobs:
         fi
 
     - name: Upload artifact
+      if: steps.changes.outputs.changed == 'true'
       uses: actions/upload-artifact@v3
       with:
         name: ${{ matrix.asset_name }}

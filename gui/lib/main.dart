@@ -1,5 +1,6 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
+import 'features/compress.dart';
 
 void main() {
   runApp(const RolyPolyApp());
@@ -16,7 +17,7 @@ class RolyPolyApp extends StatelessWidget {
       title: 'RolyPoly',
       theme: light,
       darkTheme: dark,
-      home: const _Home(),
+      home: const CompressScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
@@ -42,4 +43,3 @@ class _Home extends StatelessWidget {
     );
   }
 }
-
