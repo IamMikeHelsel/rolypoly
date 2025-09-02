@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: build test fmt lint ci
+.PHONY: build test fmt lint ci test-all
 
 build:
 	cargo build --bins --all-targets
@@ -16,3 +16,5 @@ lint:
 
 ci: fmt lint test
 
+test-all:
+	./scripts/test_all.sh
