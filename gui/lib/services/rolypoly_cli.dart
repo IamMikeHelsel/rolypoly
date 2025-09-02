@@ -3,9 +3,24 @@ import 'dart:convert';
 import 'dart:io';
 
 class RolyPolyCli {
-  RolyPolyCli({this.binary = 'rolypoly'});
+  RolyPolyCli({String? binary}) : binary = _resolveBinary(binary);
 
   final String binary;
+
+  static String _resolveBinary(String? provided) {
+    if (provided != null && provided.isNotEmpty) return provided;
+    final envOverride = Platform.environment['ROLYPOLY_CLI'];
+    if (envOverride != null && envOverride.isNotEmpty) return envOverride;
+    // On macOS, prefer a bundled CLI next to the app executable
+    if (Platform.isMacOS) {
+      try {
+        final exe = File(Platform.resolvedExecutable);
+        final candidate = File('${exe.parent.path}/rolypoly');
+        if (candidate.existsSync()) return candidate.path;
+      } catch (_) {}
+    }
+    return 'rolypoly';
+  }
 
   Future<ProcessResult> create(String archive, List<String> files, {bool json = false}) {
     final args = ['create', archive, ...files, if (json) '--json'];

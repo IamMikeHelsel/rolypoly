@@ -1,0 +1,204 @@
+name: Release GUI macOS
+
+on:
+  push:
+    tags:
+      - 'gui-v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  APP_NAME: RolyPoly
+
+jobs:
+  build-arm64:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Enable macOS and bootstrap
+        working-directory: gui
+        run: |
+          flutter config --enable-macos-desktop
+          [ -d macos ] || flutter create .
+          flutter pub get
+      - name: Setup Rust (arm64)
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+      - name: Build CLI arm64
+        run: cargo build --release --bin rolypoly
+      - name: Build Flutter app (arm64)
+        working-directory: gui
+        run: flutter build macos --release
+      - name: Bundle CLI into app (arm64)
+        id: bundle_arm
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=$(ls -d gui/build/macos/Build/Products/Release/*.app | head -n1)
+          cp target/release/rolypoly "$APP/Contents/MacOS/rolypoly"
+          chmod +x "$APP/Contents/MacOS/rolypoly"
+          echo "app_path=$APP" >> $GITHUB_OUTPUT
+      - name: Zip app (arm64)
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent "${{ steps.bundle_arm.outputs.app_path }}" "app-arm64.zip"
+      - name: Upload arm64 app
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-arm64
+          path: app-arm64.zip
+
+  build-x86_64:
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Enable macOS and bootstrap
+        working-directory: gui
+        run: |
+          flutter config --enable-macos-desktop
+          [ -d macos ] || flutter create .
+          flutter pub get
+      - name: Setup Rust (x86_64)
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          targets: x86_64-apple-darwin
+      - name: Build CLI x86_64
+        run: |
+          rustup target add x86_64-apple-darwin
+          cargo build --release --bin rolypoly --target x86_64-apple-darwin
+      - name: Build Flutter app (x86_64)
+        working-directory: gui
+        run: flutter build macos --release
+      - name: Bundle CLI into app (x86_64)
+        id: bundle_x86
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=$(ls -d gui/build/macos/Build/Products/Release/*.app | head -n1)
+          cp target/x86_64-apple-darwin/release/rolypoly "$APP/Contents/MacOS/rolypoly"
+          chmod +x "$APP/Contents/MacOS/rolypoly"
+          echo "app_path=$APP" >> $GITHUB_OUTPUT
+      - name: Zip app (x86_64)
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent "${{ steps.bundle_x86.outputs.app_path }}" "app-x86_64.zip"
+      - name: Upload x86_64 app
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-x86_64
+          path: app-x86_64.zip
+
+  universal:
+    runs-on: macos-14
+    needs: [build-arm64, build-x86_64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: app-*
+          path: ./artifacts
+      - name: Unzip both apps
+        run: |
+          mkdir -p build_arm build_x86
+          ditto -x -k artifacts/app-arm64/app-arm64.zip build_arm
+          ditto -x -k artifacts/app-x86_64/app-x86_64.zip build_x86
+          echo "ARM_APP=$(ls -d build_arm/*.app | head -n1)" >> $GITHUB_ENV
+          echo "X86_APP=$(ls -d build_x86/*.app | head -n1)" >> $GITHUB_ENV
+      - name: Create Universal app by lipo
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ARM_APP="$ARM_APP"; X86_APP="$X86_APP"
+          # Prepare output copy from arm64
+          OUT_APP="Universal.app"
+          rm -rf "$OUT_APP"
+          cp -R "$ARM_APP" "$OUT_APP"
+          # Determine main executable
+          EXE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$OUT_APP/Contents/Info.plist")
+          # lipo main executable (if both exist)
+          lipo -create "$ARM_APP/Contents/MacOS/$EXE" "$X86_APP/Contents/MacOS/$EXE" -output "$OUT_APP/Contents/MacOS/$EXE"
+          # lipo bundled CLI
+          if [ -f "$ARM_APP/Contents/MacOS/rolypoly" ] && [ -f "$X86_APP/Contents/MacOS/rolypoly" ]; then
+            lipo -create "$ARM_APP/Contents/MacOS/rolypoly" "$X86_APP/Contents/MacOS/rolypoly" -output "$OUT_APP/Contents/MacOS/rolypoly"
+            chmod +x "$OUT_APP/Contents/MacOS/rolypoly"
+          fi
+          # lipo all frameworks present in both apps
+          for FW in $(find "$OUT_APP/Contents/Frameworks" -maxdepth 1 -name "*.framework" -type d); do
+            NAME=$(basename "$FW" .framework)
+            ARM_BIN="$ARM_APP/Contents/Frameworks/$NAME.framework/$NAME"
+            X86_BIN="$X86_APP/Contents/Frameworks/$NAME.framework/$NAME"
+            OUT_BIN="$OUT_APP/Contents/Frameworks/$NAME.framework/$NAME"
+            if [ -f "$ARM_BIN" ] && [ -f "$X86_BIN" ]; then
+              lipo -create "$ARM_BIN" "$X86_BIN" -output "$OUT_BIN"
+            fi
+          done
+          echo "OUT_APP=$OUT_APP" >> $GITHUB_ENV
+      - name: Optional codesign (if secrets present)
+        if: ${{ secrets.MACOS_CERT_BASE64 != '' && secrets.MACOS_SIGNING_IDENTITY != '' }}
+        env:
+          MACOS_CERT_BASE64: ${{ secrets.MACOS_CERT_BASE64 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+          MACOS_BUNDLE_ID: ${{ secrets.MACOS_BUNDLE_ID }}
+          KEYCHAIN_PASSWORD: temp-actions
+        shell: bash
+        run: |
+          set -euxo pipefail
+          # Setup keychain and import cert
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          echo "$MACOS_CERT_BASE64" | base64 --decode > signing.p12
+          security import signing.p12 -k build.keychain -P "$MACOS_CERT_PASSWORD" -A
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          # Optionally set bundle id
+          if [ -n "${MACOS_BUNDLE_ID:-}" ]; then
+            /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $MACOS_BUNDLE_ID" "$OUT_APP/Contents/Info.plist" || true
+          fi
+          # Sign frameworks first
+          find "$OUT_APP/Contents/Frameworks" -type d -name "*.framework" -print0 | xargs -0 -I{} codesign --force --options runtime --timestamp --sign "$MACOS_SIGNING_IDENTITY" {}
+          # Sign the app bundle (deep as safety)
+          codesign --force --options runtime --timestamp --deep --sign "$MACOS_SIGNING_IDENTITY" "$OUT_APP"
+          codesign --verify --deep --strict "$OUT_APP"
+      - name: Package DMG
+        run: |
+          DMG="${APP_NAME}-macOS-universal.dmg"
+          hdiutil create -volname "$APP_NAME" -srcfolder "$OUT_APP" -ov -format UDZO "$DMG"
+          echo "DMG=$DMG" >> $GITHUB_ENV
+      - name: Optional notarization (if secrets present)
+        if: ${{ secrets.MACOS_NOTARIZE_APPLE_ID != '' && secrets.MACOS_NOTARIZE_PASSWORD != '' && secrets.MACOS_NOTARIZE_TEAM_ID != '' }}
+        env:
+          APPLE_ID: ${{ secrets.MACOS_NOTARIZE_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.MACOS_NOTARIZE_PASSWORD }}
+          TEAM_ID: ${{ secrets.MACOS_NOTARIZE_TEAM_ID }}
+        run: |
+          xcrun notarytool submit "$DMG" --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$TEAM_ID" --wait
+          # Staple to app and DMG
+          xcrun stapler staple "$OUT_APP"
+          xcrun stapler staple "$DMG" || true
+      - name: Upload universal artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rolypoly-gui-macos-universal
+          path: |
+            ${{ env.DMG }}
+            ${{ env.OUT_APP }}
+      - name: Create GitHub Release (attach universal)
+        if: startsWith(github.ref, 'refs/tags/gui-v')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ${{ env.DMG }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
