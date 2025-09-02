@@ -7,6 +7,7 @@ import '../services/rolypoly_cli.dart';
 import '../services/web_zip_service.dart';
 import '../services/web_download.dart';
 import '../widgets/drop_area.dart';
+import '../services/fs_save.dart';
 
 class CompressScreen extends StatefulWidget {
   const CompressScreen({super.key});
@@ -86,14 +87,14 @@ class _CompressScreenState extends State<CompressScreen> {
 
     var out = _archivePath;
     if (out == null || out.isEmpty) {
-      final picked = await getSavePath(suggestedName: 'archive.zip', acceptedTypeGroups: const [XTypeGroup(extensions: ['zip'])]);
+      final picked = await pickSaveZip(suggestedName: 'archive.zip');
       if (picked == null) { setState(() => _running = false); return; }
       out = picked;
       setState(() => _archivePath = out);
     }
 
     try {
-      await for (final evt in _cli.streamCreate(out, _inputs)) {
+      await for (final evt in _cli.streamCreate(out!, _inputs)) {
         final event = evt['event'] as String?;
         if (event == 'progress') {
           final total = (evt['total'] ?? 0) as num;
