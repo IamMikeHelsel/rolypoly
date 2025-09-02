@@ -20,9 +20,9 @@ panic = "abort"
 [dependencies]
 anyhow = "1.0.79"
 clap = { version = "4.4.18", features = ["derive"] }
-slint = "1.4.1"
-rfd = "0.14.1"
-arboard = "3.3.0"
+slint = { version = "1.4.1", optional = true }
+rfd = { version = "0.14.1", optional = true }
+arboard = { version = "3.3.0", optional = true }
 zip = "4.2.0"
 walkdir = "2.5.0"
 indicatif = "0.18.0"
@@ -45,7 +45,16 @@ path = "src/lib.rs"
 
 [[bin]]
 name = "rusty"
-path = "src/main.rs"
+path = "src/bin/rusty.rs"
+
+[[bin]]
+name = "rusty-gui"
+path = "src/bin/rusty-gui.rs"
+required-features = ["gui"]
 
 [build-dependencies]
 slint-build = "1.8"
+
+[features]
+default = []
+gui = ["dep:slint", "dep:rfd", "dep:arboard"]

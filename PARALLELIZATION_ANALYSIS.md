@@ -2,49 +2,50 @@
 
 ## Current State: Single-Threaded Implementation
 
-The current implementation is **single-threaded** and does not leverage parallelization opportunities. Here's the analysis:
+The current implementation is **single-threaded** and does not leverage parallelization opportunities. Here's the
+analysis:
 
 ### ❌ **What Doesn't Support Parallelization Well:**
 
 1. **Sequential File Processing**:
-   - Files are processed one at a time in `create_archive()`
-   - No concurrent compression of multiple files
-   - Directory walking is sequential
+    - Files are processed one at a time in `create_archive()`
+    - No concurrent compression of multiple files
+    - Directory walking is sequential
 
 2. **Single ZIP Writer**:
-   - The `ZipWriter` is used sequentially
-   - ZIP format requires sequential writing of central directory
-   - Cannot write multiple files to ZIP concurrently
+    - The `ZipWriter` is used sequentially
+    - ZIP format requires sequential writing of central directory
+    - Cannot write multiple files to ZIP concurrently
 
 3. **Extraction is Sequential**:
-   - Files are extracted one by one
-   - No concurrent extraction of multiple files from the same archive
+    - Files are extracted one by one
+    - No concurrent extraction of multiple files from the same archive
 
 4. **Progress Tracking**:
-   - Current progress bars are not thread-safe
-   - Single progress counter for all operations
+    - Current progress bars are not thread-safe
+    - Single progress counter for all operations
 
 ### ✅ **What Could Be Parallelized:**
 
 1. **File Reading and Compression**:
-   - Individual file compression can be parallelized
-   - Buffer files in memory, compress in parallel, then write sequentially
+    - Individual file compression can be parallelized
+    - Buffer files in memory, compress in parallel, then write sequentially
 
 2. **Directory Walking**:
-   - Can parallelize file discovery and metadata collection
-   - Build file list concurrently before archiving
+    - Can parallelize file discovery and metadata collection
+    - Build file list concurrently before archiving
 
 3. **Hash Calculation**:
-   - Multiple files can be hashed in parallel
-   - Currently `calculate_file_hash()` is single-threaded
+    - Multiple files can be hashed in parallel
+    - Currently `calculate_file_hash()` is single-threaded
 
 4. **Extraction**:
-   - Multiple files can be extracted from ZIP in parallel
-   - Each file extraction is independent
+    - Multiple files can be extracted from ZIP in parallel
+    - Each file extraction is independent
 
 5. **Archive Validation**:
-   - Multiple files in archive can be validated concurrently
-   - CRC checks can be parallelized
+    - Multiple files in archive can be validated concurrently
+    - CRC checks can be parallelized
 
 ## Recommended Parallelization Strategy
 
@@ -166,7 +167,8 @@ impl ArchiveManager {
 
 ## Conclusion
 
-The current implementation **does not support parallelization well** but this is acceptable for a v0.1.0 release. The architecture is clean and could be extended to support parallelization in future versions with moderate effort.
+The current implementation **does not support parallelization well** but this is acceptable for a v0.1.0 release. The
+architecture is clean and could be extended to support parallelization in future versions with moderate effort.
 
 **Priority for parallelization**:
 

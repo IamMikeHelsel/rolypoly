@@ -22,8 +22,8 @@ jobs:
           toolchain: stable
           components: rustfmt, clippy
           
-      - name: Run tests
-        run: cargo test --all-features
+      - name: Run tests (CLI only)
+        run: cargo test --all --no-default-features
         
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
@@ -47,11 +47,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libgtk-3-dev
           
-      - name: Run GUI integration tests
-        run: cargo test --test gui_integration_tests
-        
-      - name: Run GUI stress tests
-        run: cargo test --test gui_stress_tests
+      - name: Run GUI integration tests (feature)
+        run: cargo test --features gui --tests
 
   build-check:
     name: Build Check
@@ -73,11 +70,5 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libgtk-3-dev
           
-      - name: Install Tauri CLI
-        run: cargo install tauri-cli --version "^2.0"
-        
       - name: Build CLI
-        run: cargo build --release --bin rusty
-        
-      - name: Build GUI (check only)
-        run: cargo tauri build --ci
+        run: cargo build --release --bin rusty --no-default-features

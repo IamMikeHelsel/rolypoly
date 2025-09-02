@@ -1,7 +1,8 @@
+#![cfg(feature = "gui")]
 use std::fs;
 use tempfile::TempDir;
 use tokio::process::Command as TokioCommand;
-use tokio::time::{Duration, sleep};
+use tokio::time::{sleep, Duration};
 
 // Mock UI testing framework for Slint applications
 // Note: These tests simulate UI interactions and verify expected behaviors
@@ -11,7 +12,7 @@ async fn test_gui_startup_performance() {
     let start_time = std::time::Instant::now();
 
     let mut child = TokioCommand::new("cargo")
-        .args(&["run", "--bin", "rusty", "--", "--gui"])
+        .args(&["run", "--bin", "rusty-gui"]) 
         .kill_on_drop(true)
         .spawn()
         .expect("Failed to start GUI");
@@ -35,7 +36,7 @@ async fn test_gui_startup_performance() {
 #[tokio::test]
 async fn test_gui_memory_usage() {
     let mut child = TokioCommand::new("cargo")
-        .args(&["run", "--bin", "rusty", "--", "--gui"])
+        .args(&["run", "--bin", "rusty-gui"]) 
         .kill_on_drop(true)
         .spawn()
         .expect("Failed to start GUI");
@@ -78,7 +79,7 @@ async fn test_gui_with_large_archive() {
 
     // Test GUI with large archive
     let mut child = TokioCommand::new("cargo")
-        .args(&["run", "--bin", "rusty", "--", "--gui"])
+        .args(&["run", "--bin", "rusty-gui"]) 
         .env("RUSTY_TEST_ARCHIVE", archive_path.to_str().unwrap())
         .kill_on_drop(true)
         .spawn()
@@ -121,7 +122,7 @@ async fn test_gui_stress_test() {
 
     // Test GUI with many files
     let mut child = TokioCommand::new("cargo")
-        .args(&["run", "--bin", "rusty", "--", "--gui"])
+        .args(&["run", "--bin", "rusty-gui"]) 
         .env("RUSTY_TEST_ARCHIVE", archive_path.to_str().unwrap())
         .kill_on_drop(true)
         .spawn()
@@ -146,7 +147,7 @@ async fn test_gui_error_handling() {
 
     // Test GUI with invalid archive
     let mut child = TokioCommand::new("cargo")
-        .args(&["run", "--bin", "rusty", "--", "--gui"])
+        .args(&["run", "--bin", "rusty-gui"]) 
         .env("RUSTY_TEST_ARCHIVE", invalid_archive.to_str().unwrap())
         .kill_on_drop(true)
         .spawn()
@@ -164,7 +165,7 @@ async fn test_gui_error_handling() {
 #[tokio::test]
 async fn test_gui_responsiveness() {
     let mut child = TokioCommand::new("cargo")
-        .args(&["run", "--bin", "rusty", "--", "--gui"])
+        .args(&["run", "--bin", "rusty-gui"]) 
         .kill_on_drop(true)
         .spawn()
         .expect("Failed to start GUI");
@@ -188,7 +189,7 @@ async fn test_gui_responsiveness() {
 async fn test_gui_cross_platform_compatibility() {
     // Test that GUI starts on different platforms
     let mut child = TokioCommand::new("cargo")
-        .args(&["run", "--bin", "rusty", "--", "--gui"])
+        .args(&["run", "--bin", "rusty-gui"]) 
         .kill_on_drop(true)
         .spawn()
         .expect("Failed to start GUI on current platform");
@@ -205,7 +206,7 @@ async fn test_gui_cross_platform_compatibility() {
 async fn test_gui_theme_switching() {
     // Test that GUI can handle theme changes
     let mut child = TokioCommand::new("cargo")
-        .args(&["run", "--bin", "rusty", "--", "--gui"])
+        .args(&["run", "--bin", "rusty-gui"]) 
         .env("RUSTY_THEME", "dark")
         .kill_on_drop(true)
         .spawn()

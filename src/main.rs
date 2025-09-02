@@ -1,7 +1,6 @@
 mod archive;
 mod cli;
 mod gui;
-mod gui_improved;
 
 use anyhow::Result;
 use clap::Parser;
@@ -15,7 +14,7 @@ pub fn run_gui() -> Result<()> {
         // Log but don't crash the GUI
     }));
 
-    gui_improved::run_gui_improved()?;
+    gui::run_gui()?;
     Ok(())
 }
 

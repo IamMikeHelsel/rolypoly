@@ -15,10 +15,20 @@ pub enum AppEvent {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Operation {
-    CreateArchive { output: PathBuf, files: Vec<PathBuf> },
-    ExtractArchive { archive: PathBuf, output: PathBuf },
-    ValidateArchive { archive: PathBuf },
-    CalculateHash { file: PathBuf },
+    CreateArchive {
+        output: PathBuf,
+        files: Vec<PathBuf>,
+    },
+    ExtractArchive {
+        archive: PathBuf,
+        output: PathBuf,
+    },
+    ValidateArchive {
+        archive: PathBuf,
+    },
+    CalculateHash {
+        file: PathBuf,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -76,7 +86,7 @@ impl AppStateManager {
 
     pub fn transition_to(&self, new_state: AppState) -> Result<(), String> {
         let current_state = self.get_state();
-        
+
         // Validate state transitions
         match (&current_state, &new_state) {
             (AppState::Empty, AppState::FilesSelected(_)) => Ok(()),
@@ -90,7 +100,9 @@ impl AppStateManager {
             (AppState::Error(_), AppState::Empty) => Ok(()),
             (AppState::Error(_), AppState::FilesSelected(_)) => Ok(()),
             (AppState::Error(_), AppState::ArchiveLoaded(_)) => Ok(()),
-            _ => Err(format!("Invalid state transition from {:?} to {:?}", current_state, new_state)),
+            _ => {
+                Err(format!("Invalid state transition from {:?} to {:?}", current_state, new_state))
+            }
         }?;
 
         self.set_state(new_state);
@@ -112,26 +124,26 @@ mod tests {
     #[test]
     fn test_state_transitions() {
         let state_manager = AppStateManager::new();
-        
+
         // Test valid transitions
         assert_eq!(state_manager.get_state(), AppState::Empty);
-        
+
         let files = vec![PathBuf::from("test.txt")];
         assert!(state_manager.transition_to(AppState::FilesSelected(files.clone())).is_ok());
-        
+
         let operation = Operation::CreateArchive {
             output: PathBuf::from("test.zip"),
             files: files.clone(),
         };
         assert!(state_manager.transition_to(AppState::Processing(operation)).is_ok());
-        
+
         assert!(state_manager.transition_to(AppState::Empty).is_ok());
     }
 
     #[test]
     fn test_invalid_transitions() {
         let state_manager = AppStateManager::new();
-        
+
         // Test invalid transition
         let operation = Operation::CreateArchive {
             output: PathBuf::from("test.zip"),
@@ -144,11 +156,11 @@ mod tests {
     fn test_event_system() {
         let state_manager = AppStateManager::new();
         let mut receiver = state_manager.subscribe();
-        
+
         // Test event emission
         let files = vec![PathBuf::from("test.txt")];
         state_manager.emit_event(AppEvent::FilesAdded(files.clone()));
-        
+
         // Check that event was received
         if let Ok(event) = receiver.try_recv() {
             match event {

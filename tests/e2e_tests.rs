@@ -1,13 +1,14 @@
+#![cfg(feature = "gui")]
 use std::fs;
 use std::process::Command;
 use tempfile::TempDir;
 use tokio::process::Command as TokioCommand;
-use tokio::time::{Duration, sleep};
+use tokio::time::{sleep, Duration};
 
 #[tokio::test]
 async fn test_gui_launch_and_close() {
     let output = TokioCommand::new("cargo")
-        .args(&["run", "--bin", "rusty", "--", "--gui"])
+        .args(&["run", "--bin", "rusty-gui"]) 
         .kill_on_drop(true)
         .spawn();
 

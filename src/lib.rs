@@ -1,6 +1,6 @@
 pub mod archive;
 pub mod cli;
+#[cfg(feature = "gui")]
 pub mod gui;
-pub mod gui_improved;
-pub mod state;
 pub mod operations;
+pub mod state;

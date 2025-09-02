@@ -52,8 +52,8 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libfontconfig1-dev libxkbcommon-dev
 
-    - name: Run tests
-      run: cargo test --verbose
+    - name: Run tests (CLI only)
+      run: cargo test --all --no-default-features --verbose
 
     - name: Run clippy
       run: cargo clippy -- -D warnings
@@ -61,12 +61,12 @@ jobs:
     - name: Check formatting
       run: cargo fmt --all -- --check
 
-    - name: Run end-to-end tests
-      run: cargo test --test e2e_tests --verbose
+    - name: Run end-to-end tests (GUI feature)
+      run: cargo test --features gui --test e2e_tests --verbose
       timeout-minutes: 10
 
-    - name: Run GUI tests (headless)
-      run: cargo test --test gui_ui_tests --verbose
+    - name: Run GUI tests (headless, feature)
+      run: cargo test --features gui --test gui_ui_tests --verbose
       timeout-minutes: 10
       env:
         DISPLAY: :99

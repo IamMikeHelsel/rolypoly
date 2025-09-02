@@ -38,17 +38,17 @@ impl OperationManager {
             Operation::ValidateArchive { archive } => {
                 self.validate_archive_with_progress(archive).await
             }
-            Operation::CalculateHash { file } => {
-                self.calculate_hash_with_progress(file).await
-            }
+            Operation::CalculateHash { file } => self.calculate_hash_with_progress(file).await,
         };
 
         match &result {
             Ok(op_result) => {
-                self.state_manager.emit_event(AppEvent::OperationCompleted(operation, op_result.clone()));
+                self.state_manager
+                    .emit_event(AppEvent::OperationCompleted(operation, op_result.clone()));
             }
             Err(error) => {
-                self.state_manager.emit_event(AppEvent::OperationFailed(operation, error.clone()));
+                self.state_manager
+                    .emit_event(AppEvent::OperationFailed(operation, error.clone()));
             }
         }
 
@@ -74,7 +74,7 @@ impl OperationManager {
             for i in 0..=100 {
                 let progress = i as f64 / 100.0;
                 state_manager.emit_event(AppEvent::OperationProgress(operation.clone(), progress));
-                
+
                 if i < 100 {
                     std::thread::sleep(std::time::Duration::from_millis(10));
                 }
@@ -110,7 +110,7 @@ impl OperationManager {
             for i in 0..=100 {
                 let progress = i as f64 / 100.0;
                 state_manager.emit_event(AppEvent::OperationProgress(operation.clone(), progress));
-                
+
                 if i < 100 {
                     std::thread::sleep(std::time::Duration::from_millis(10));
                 }
@@ -142,7 +142,7 @@ impl OperationManager {
             for i in 0..=100 {
                 let progress = i as f64 / 100.0;
                 state_manager.emit_event(AppEvent::OperationProgress(operation.clone(), progress));
-                
+
                 if i < 100 {
                     std::thread::sleep(std::time::Duration::from_millis(5));
                 }
@@ -159,22 +159,17 @@ impl OperationManager {
             .map_err(|e| e.to_string())
     }
 
-    async fn calculate_hash_with_progress(
-        &self,
-        file: PathBuf,
-    ) -> Result<OperationResult, String> {
+    async fn calculate_hash_with_progress(&self, file: PathBuf) -> Result<OperationResult, String> {
         let archive_manager = self.archive_manager.clone();
         let state_manager = self.state_manager.clone();
-        let operation = Operation::CalculateHash {
-            file: file.clone(),
-        };
+        let operation = Operation::CalculateHash { file: file.clone() };
 
         let result = tokio::task::spawn_blocking(move || {
             // Simulate progress updates
             for i in 0..=100 {
                 let progress = i as f64 / 100.0;
                 state_manager.emit_event(AppEvent::OperationProgress(operation.clone(), progress));
-                
+
                 if i < 100 {
                     std::thread::sleep(std::time::Duration::from_millis(2));
                 }
