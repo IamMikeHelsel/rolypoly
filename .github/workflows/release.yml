@@ -76,6 +76,7 @@ jobs:
       with:
         files: |
           */rolypoly-*
+        prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
         body: |
           ## Changes
           
