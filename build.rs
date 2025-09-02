@@ -58,4 +58,3 @@ pub const LONG_VERSION: &str = "{long_v}";
     println!("cargo:rerun-if-env-changed=BUILD_NUMBER");
     println!("cargo:rerun-if-env-changed=GITHUB_RUN_NUMBER");
 }
-

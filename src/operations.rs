@@ -154,9 +154,7 @@ impl OperationManager {
         .await
         .map_err(|e| e.to_string())?;
 
-        result
-            .map(|valid| OperationResult::ArchiveValidated(valid))
-            .map_err(|e| e.to_string())
+        result.map(OperationResult::ArchiveValidated).map_err(|e| e.to_string())
     }
 
     async fn calculate_hash_with_progress(&self, file: PathBuf) -> Result<OperationResult, String> {
@@ -181,9 +179,7 @@ impl OperationManager {
         .await
         .map_err(|e| e.to_string())?;
 
-        result
-            .map(|hash| OperationResult::HashCalculated(hash))
-            .map_err(|e| e.to_string())
+        result.map(OperationResult::HashCalculated).map_err(|e| e.to_string())
     }
 
     pub async fn cancel_all_operations(&self) {

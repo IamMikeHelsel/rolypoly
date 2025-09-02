@@ -46,3 +46,7 @@ path = "src/lib.rs"
 [[bin]]
 name = "rolypoly"
 path = "src/bin/rolypoly.rs"
+
+[features]
+default = []
+gui = []

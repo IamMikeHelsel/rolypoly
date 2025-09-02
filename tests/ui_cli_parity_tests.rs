@@ -15,7 +15,7 @@ async fn test_cli_gui_parity_create_archive() -> Result<()> {
     // Create archive using CLI
     let cli_archive = temp_dir.path().join("cli_archive.zip");
     let cli_output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "rolypoly",
@@ -77,7 +77,7 @@ async fn test_cli_gui_parity_extract_archive() -> Result<()> {
     // Create archive using CLI
     let archive_path = temp_dir.path().join("test_archive.zip");
     let create_output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "rolypoly",
@@ -94,7 +94,7 @@ async fn test_cli_gui_parity_extract_archive() -> Result<()> {
     let cli_extract_dir = temp_dir.path().join("cli_extract");
     fs::create_dir_all(&cli_extract_dir)?;
     let cli_extract_output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "rolypoly",
@@ -132,7 +132,7 @@ async fn test_cli_gui_parity_validate_archive() -> Result<()> {
     // Create archive
     let archive_path = temp_dir.path().join("test_archive.zip");
     let create_output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "rolypoly",
@@ -147,7 +147,7 @@ async fn test_cli_gui_parity_validate_archive() -> Result<()> {
 
     // Validate using CLI
     let cli_validate_output = Command::new("cargo")
-        .args(&["run", "--bin", "rolypoly", "--", "validate", archive_path.to_str().unwrap()])
+        .args(["run", "--bin", "rolypoly", "--", "validate", archive_path.to_str().unwrap()])
         .output()?;
 
     let cli_success = cli_validate_output.status.success();
@@ -179,12 +179,12 @@ async fn test_cli_gui_parity_hash_calculation() -> Result<()> {
 
     // Calculate hash using CLI
     let cli_hash_output = Command::new("cargo")
-        .args(&["run", "--bin", "rolypoly", "--", "hash", test_file.to_str().unwrap()])
+        .args(["run", "--bin", "rolypoly", "--", "hash", test_file.to_str().unwrap()])
         .output()?;
 
     assert!(cli_hash_output.status.success(), "CLI hash calculation failed");
     let cli_output = String::from_utf8_lossy(&cli_hash_output.stdout);
-    
+
     // Extract just the hash value from CLI output (format: "SHA256: <hash>")
     let cli_hash = cli_output
         .lines()
@@ -215,7 +215,7 @@ async fn test_cli_gui_parity_large_file_handling() -> Result<()> {
     // Create archive using CLI
     let cli_archive = temp_dir.path().join("cli_large.zip");
     let cli_create_output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "rolypoly",
@@ -267,12 +267,13 @@ async fn test_cli_gui_parity_multiple_files() -> Result<()> {
 
     // Create archive using CLI
     let cli_archive = temp_dir.path().join("cli_multi.zip");
-    let mut cli_args = vec!["run", "--bin", "rolypoly", "--", "create", cli_archive.to_str().unwrap()];
+    let mut cli_args =
+        vec!["run", "--bin", "rolypoly", "--", "create", cli_archive.to_str().unwrap()];
     for file in &files {
         cli_args.push(file.to_str().unwrap());
     }
 
-    let cli_create_output = Command::new("cargo").args(&cli_args).output()?;
+    let cli_create_output = Command::new("cargo").args(cli_args).output()?;
 
     assert!(cli_create_output.status.success(), "CLI multi-file archive creation failed");
 
@@ -306,7 +307,7 @@ async fn test_cli_gui_parity_error_handling() -> Result<()> {
 
     // Test CLI error handling
     let cli_output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "rolypoly",
@@ -341,7 +342,7 @@ async fn test_performance_parity() -> Result<()> {
     let cli_start = std::time::Instant::now();
     let cli_archive = temp_dir.path().join("cli_perf.zip");
     let cli_output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "rolypoly",
@@ -364,16 +365,8 @@ async fn test_performance_parity() -> Result<()> {
 
     // Since CLI includes cargo run overhead, we expect GUI to be faster
     // Just verify both completed successfully and in reasonable time
-    assert!(
-        cli_duration.as_secs() < 10,
-        "CLI took too long: {}ms",
-        cli_duration.as_millis()
-    );
-    assert!(
-        gui_duration.as_secs() < 2,
-        "GUI took too long: {}ms", 
-        gui_duration.as_millis()
-    );
+    assert!(cli_duration.as_secs() < 10, "CLI took too long: {}ms", cli_duration.as_millis());
+    assert!(gui_duration.as_secs() < 2, "GUI took too long: {}ms", gui_duration.as_millis());
 
     // Log the performance for informational purposes
     eprintln!(

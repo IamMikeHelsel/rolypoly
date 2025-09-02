@@ -78,8 +78,17 @@ impl Cli {
                 manager.create_archive(&archive, &file_refs)?;
                 if self.json {
                     #[derive(Serialize)]
-                    struct Out<'a> { event: &'a str, archive: String }
-                    println!("{}", serde_json::to_string(&Out { event: "created", archive: archive.display().to_string() })?);
+                    struct Out<'a> {
+                        event: &'a str,
+                        archive: String,
+                    }
+                    println!(
+                        "{}",
+                        serde_json::to_string(&Out {
+                            event: "created",
+                            archive: archive.display().to_string()
+                        })?
+                    );
                 }
                 // Otherwise progress and completion messages are handled by the archiver
             }
@@ -87,8 +96,19 @@ impl Cli {
                 manager.extract_archive(&archive, &output)?;
                 if self.json {
                     #[derive(Serialize)]
-                    struct Out<'a> { event: &'a str, archive: String, output: String }
-                    println!("{}", serde_json::to_string(&Out { event: "extracted", archive: archive.display().to_string(), output: output.display().to_string() })?);
+                    struct Out<'a> {
+                        event: &'a str,
+                        archive: String,
+                        output: String,
+                    }
+                    println!(
+                        "{}",
+                        serde_json::to_string(&Out {
+                            event: "extracted",
+                            archive: archive.display().to_string(),
+                            output: output.display().to_string()
+                        })?
+                    );
                 }
                 // Otherwise progress and completion messages are handled by the archiver
             }
@@ -96,14 +116,25 @@ impl Cli {
                 let contents = manager.list_archive(&archive)?;
                 if self.json {
                     #[derive(Serialize)]
-                    struct Out { archive: String, files: Vec<String> }
-                    println!("{}", serde_json::to_string(&Out { archive: archive.display().to_string(), files: contents })?);
+                    struct Out {
+                        archive: String,
+                        files: Vec<String>,
+                    }
+                    println!(
+                        "{}",
+                        serde_json::to_string(&Out {
+                            archive: archive.display().to_string(),
+                            files: contents
+                        })?
+                    );
                 } else {
                     println!("Archive: {}", archive.display());
                     if contents.is_empty() {
                         println!("Archive is empty");
                     } else {
-                        for item in contents { println!("  {item}"); }
+                        for item in contents {
+                            println!("  {item}");
+                        }
                     }
                 }
             }
@@ -111,14 +142,21 @@ impl Cli {
                 let is_valid = manager.validate_archive(&archive)?;
                 if self.json {
                     #[derive(Serialize)]
-                    struct Out { archive: String, valid: bool }
-                    println!("{}", serde_json::to_string(&Out { archive: archive.display().to_string(), valid: is_valid })?);
-                } else {
-                    if is_valid {
-                        println!("✓ Archive is valid and all files passed integrity checks");
-                    } else {
-                        println!("✗ Archive validation failed");
+                    struct Out {
+                        archive: String,
+                        valid: bool,
                     }
+                    println!(
+                        "{}",
+                        serde_json::to_string(&Out {
+                            archive: archive.display().to_string(),
+                            valid: is_valid
+                        })?
+                    );
+                } else if is_valid {
+                    println!("✓ Archive is valid and all files passed integrity checks");
+                } else {
+                    println!("✗ Archive validation failed");
                 }
             }
             Commands::Stats { archive } => {
@@ -134,11 +172,15 @@ impl Cli {
                     println!("  Compression ratio: {:.1}%", stats.compression_ratio);
                     if stats.total_uncompressed_size > 0 {
                         if stats.total_uncompressed_size > stats.total_compressed_size {
-                            let space_saved = stats.total_uncompressed_size - stats.total_compressed_size;
+                            let space_saved =
+                                stats.total_uncompressed_size - stats.total_compressed_size;
                             println!("  Space saved: {space_saved} bytes");
                         } else {
-                            let space_increased = stats.total_compressed_size - stats.total_uncompressed_size;
-                            println!("  Space increased: {space_increased} bytes (due to compression overhead)");
+                            let space_increased =
+                                stats.total_compressed_size - stats.total_uncompressed_size;
+                            println!(
+                                "  Space increased: {space_increased} bytes (due to compression overhead)"
+                            );
                         }
                     }
                 }
@@ -147,8 +189,19 @@ impl Cli {
                 let hash = manager.calculate_file_hash(&file)?;
                 if self.json {
                     #[derive(Serialize)]
-                    struct Out { file: String, algo: &'static str, hash: String }
-                    println!("{}", serde_json::to_string(&Out { file: file.display().to_string(), algo: "sha256", hash })?);
+                    struct Out {
+                        file: String,
+                        algo: &'static str,
+                        hash: String,
+                    }
+                    println!(
+                        "{}",
+                        serde_json::to_string(&Out {
+                            file: file.display().to_string(),
+                            algo: "sha256",
+                            hash
+                        })?
+                    );
                 } else {
                     println!("SHA256: {hash}");
                 }

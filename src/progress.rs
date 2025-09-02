@@ -14,10 +14,10 @@ pub fn set_output_mode(json: bool, progress: bool) {
 }
 
 pub fn output_mode() -> OutputMode {
-    OUTPUT_MODE
-        .get()
-        .copied()
-        .unwrap_or(OutputMode { json: false, progress: true })
+    OUTPUT_MODE.get().copied().unwrap_or(OutputMode {
+        json: false,
+        progress: true,
+    })
 }
 
 pub fn print_json<T: serde::Serialize>(value: &T) {
@@ -25,4 +25,3 @@ pub fn print_json<T: serde::Serialize>(value: &T) {
         println!("{}", s);
     }
 }
-

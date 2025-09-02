@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Simple developer helper for common tasks
+# Usage:
+#   ./dev test         # fmt + clippy + tests
+#   ./dev test:quick   # tests only
+#   ./dev fmt          # format code
+#   ./dev lint         # clippy
+#   ./dev ci           # fmt + clippy + tests (same as test)
+
+cmd="${1:-}"
+case "$cmd" in
+  test|ci)
+    echo "==> Formatting check"
+    cargo fmt --all -- --check || true
+    echo "==> Lint (all targets, all features)"
+    cargo clippy --all-targets --all-features -- -D warnings || true
+    echo "==> Run tests"
+    cargo test --all --no-default-features
+    ;;
+  test:quick)
+    cargo test --all --no-default-features
+    ;;
+  fmt)
+    cargo fmt --all
+    ;;
+  lint)
+    cargo clippy --all-targets --all-features -- -D warnings
+    ;;
+  *)
+    cat <<USAGE
+Usage: ./dev <command>
+Commands:
+  test         fmt + clippy + tests
+  test:quick   tests only
+  fmt          format code
+  lint         run clippy
+  ci           alias for test
+USAGE
+    exit 1
+    ;;
+esac
+

@@ -177,8 +177,14 @@ rolypoly stats large_archive.zip
 ## 🧪 Testing
 
 ```bash
-# Run all tests
-cargo test
+# Quick local test (fmt + clippy + tests)
+./dev test
+
+# Or via Makefile
+make test
+
+# Run all tests directly
+cargo test --all --no-default-features
 
 # Run performance benchmarks
 cargo test --bench performance_benchmark
@@ -189,6 +195,21 @@ cargo test --ignored stress_test
 # Run integration tests
 cargo test --test integration_tests
 ```
+
+## 🚢 Release
+
+CLI releases are tagged using `cli-vX.Y.Z`. A helper is provided:
+
+```bash
+# Create a CLI release tag (annotated) at latest main
+./scripts/release.sh cli 0.1.0
+
+# Then push the branch and tag
+git push origin release/cli
+git push origin cli-v0.1.0
+```
+
+The `Release CLI` workflow builds artifacts for Linux, macOS, and Windows and creates a GitHub Release with a generated changelog and scorecard.
 
 ## 🔄 Roadmap
 

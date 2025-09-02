@@ -1,10 +1,10 @@
 use anyhow::Result;
 use indicatif::{ProgressBar, ProgressStyle};
-use std::time::Instant;
 use sha2::{Digest, Sha256};
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
+use std::time::Instant;
 use walkdir::WalkDir;
 use zip::write::SimpleFileOptions;
 use zip::{ZipArchive, ZipWriter};
@@ -53,7 +53,9 @@ impl ArchiveManager {
 
         for i in 0..archive.len() {
             let file = archive.by_index(i)?;
-            if let Some(pb) = &pb { pb.set_message(format!("Validating: {}", file.name())); }
+            if let Some(pb) = &pb {
+                pb.set_message(format!("Validating: {}", file.name()));
+            }
             if mode.json {
                 crate::progress::print_json(&serde_json::json!({
                     "event":"progress","op":"validate","file": file.name(),
@@ -64,11 +66,15 @@ impl ArchiveManager {
             // The zip crate automatically validates CRC32 when reading
             // If there's a CRC mismatch, it will return an error
             drop(file);
-            if let Some(pb) = &pb { pb.inc(1); }
+            if let Some(pb) = &pb {
+                pb.inc(1);
+            }
         }
 
         let elapsed = start.elapsed();
-        if let Some(pb) = &pb { pb.finish_with_message(format!("✓ Validation completed in {:.2?}", elapsed)); }
+        if let Some(pb) = &pb {
+            pb.finish_with_message(format!("✓ Validation completed in {:.2?}", elapsed));
+        }
         if mode.json {
             crate::progress::print_json(&serde_json::json!({
                 "event":"done","op":"validate","archive": archive_path.as_ref().display().to_string(),
@@ -187,7 +193,9 @@ impl ArchiveManager {
         for file_path in files {
             let path = file_path.as_ref();
             if path.is_file() {
-                if let Some(pb) = &pb { pb.set_message(format!("Adding: {}", path.display())); }
+                if let Some(pb) = &pb {
+                    pb.set_message(format!("Adding: {}", path.display()));
+                }
                 if mode.json {
                     let current = pb.as_ref().map(|p| p.position() + 1).unwrap_or(0);
                     crate::progress::print_json(&serde_json::json!({
@@ -196,14 +204,18 @@ impl ArchiveManager {
                     }));
                 }
                 self.add_file_to_zip(&mut zip, path, &options)?;
-                if let Some(pb) = &pb { pb.inc(1); }
+                if let Some(pb) = &pb {
+                    pb.inc(1);
+                }
             } else if path.is_dir() {
                 self.add_dir_to_zip_with_progress(&mut zip, path, &options, &pb)?;
             }
         }
 
         let elapsed = start.elapsed();
-        if let Some(pb) = &pb { pb.finish_with_message(format!("✓ Created {} files in {:.2?}", total_files, elapsed)); }
+        if let Some(pb) = &pb {
+            pb.finish_with_message(format!("✓ Created {} files in {:.2?}", total_files, elapsed));
+        }
         if mode.json {
             crate::progress::print_json(&serde_json::json!({
                 "event":"done","op":"create","archive": archive_path.as_ref().display().to_string(),
@@ -251,7 +263,9 @@ impl ArchiveManager {
         for i in 0..archive.len() {
             let mut file = archive.by_index(i)?;
             let output_path = output_dir.as_ref().join(file.name());
-            if let Some(pb) = &pb { pb.set_message(format!("Extracting: {}", file.name())); }
+            if let Some(pb) = &pb {
+                pb.set_message(format!("Extracting: {}", file.name()));
+            }
             if mode.json {
                 crate::progress::print_json(&serde_json::json!({
                     "event":"progress","op":"extract","file": file.name(),
@@ -268,11 +282,15 @@ impl ArchiveManager {
                 let mut output_file = File::create(&output_path)?;
                 std::io::copy(&mut file, &mut output_file)?;
             }
-            if let Some(pb) = &pb { pb.inc(1); }
+            if let Some(pb) = &pb {
+                pb.inc(1);
+            }
         }
 
         let elapsed = start.elapsed();
-        if let Some(pb) = &pb { pb.finish_with_message(format!("✓ Extracted in {:.2?}", elapsed)); }
+        if let Some(pb) = &pb {
+            pb.finish_with_message(format!("✓ Extracted in {:.2?}", elapsed));
+        }
         if mode.json {
             crate::progress::print_json(&serde_json::json!({
                 "event":"done","op":"extract","archive": archive_path.as_ref().display().to_string(),
@@ -335,11 +353,15 @@ impl ArchiveManager {
             };
 
             if path.is_file() {
-                if let Some(pb) = pb { pb.set_message(format!("Adding: {}", path.display())); }
+                if let Some(pb) = pb {
+                    pb.set_message(format!("Adding: {}", path.display()));
+                }
                 zip.start_file(&archive_path, *options)?;
                 let mut file = File::open(path)?;
                 std::io::copy(&mut file, zip)?;
-                if let Some(pb) = pb { pb.inc(1); }
+                if let Some(pb) = pb {
+                    pb.inc(1);
+                }
             } else if path.is_dir() && !relative_path.is_empty() {
                 zip.add_directory(format!("{archive_path}/"), *options)?;
             }

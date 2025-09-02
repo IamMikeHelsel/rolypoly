@@ -1,6 +1,6 @@
 pub mod archive;
+pub mod build_info;
 pub mod cli;
 pub mod operations;
-pub mod state;
 pub mod progress;
-pub mod build_info;
+pub mod state;

@@ -44,7 +44,7 @@ fn create_large_test_dataset(dir: &Path) -> Result<(usize, f64), Box<dyn std::er
 fn stress_test_large_archive() -> Result<(), Box<dyn std::error::Error>> {
     // Build rolypoly if needed
     if !Path::new("./target/release/rolypoly").exists() {
-        Command::new("cargo").args(&["build", "--release"]).status()?;
+        Command::new("cargo").args(["build", "--release"]).status()?;
     }
 
     let temp_dir = TempDir::new()?;
@@ -162,7 +162,7 @@ fn stress_test_large_archive() -> Result<(), Box<dyn std::error::Error>> {
 fn memory_usage_test() -> Result<(), Box<dyn std::error::Error>> {
     // Build rolypoly if needed
     if !Path::new("./target/release/rolypoly").exists() {
-        Command::new("cargo").args(&["build", "--release"]).status()?;
+        Command::new("cargo").args(["build", "--release"]).status()?;
     }
 
     let temp_dir = TempDir::new()?;
@@ -176,7 +176,7 @@ fn memory_usage_test() -> Result<(), Box<dyn std::error::Error>> {
 
     // Test with large file - this should not cause memory issues
     let output = Command::new("./target/release/rolypoly")
-        .args(&["create", archive_path.to_str().unwrap(), large_file.to_str().unwrap()])
+        .args(["create", archive_path.to_str().unwrap(), large_file.to_str().unwrap()])
         .output()?;
 
     assert!(

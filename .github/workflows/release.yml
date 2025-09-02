@@ -24,7 +24,7 @@ jobs:
             target: x86_64-pc-windows-msvc
             binary_name: rolypoly.exe
             asset_name: rolypoly-windows-x86_64-build${{ github.run_number }}.exe
-          - os: macOS-latest
+          - os: macos-latest
             target: x86_64-apple-darwin
             binary_name: rolypoly
             asset_name: rolypoly-macos-x86_64-build${{ github.run_number }}
@@ -55,11 +55,10 @@ jobs:
         fi
 
     - name: Install Rust
-      uses: actions-rs/toolchain@v1
+      uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         toolchain: stable
         target: ${{ matrix.target }}
-        default: true
 
     - name: Build
       if: steps.changes.outputs.changed == 'true'
@@ -82,7 +81,7 @@ jobs:
 
     - name: Upload artifact
       if: steps.changes.outputs.changed == 'true'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.asset_name }}
         path: |
@@ -121,24 +120,24 @@ jobs:
           merge-multiple: true
           path: ./artifacts
           if-no-files-found: ignore
-      
-    - name: Generate changelog
-      shell: bash
-      run: |
-        bash scripts/changelog.sh "${GITHUB_REF_NAME}" > CHANGELOG_BODY.md
-        if [ -f artifacts/scorecard/SCORECARD.md ]; then
-          echo >> CHANGELOG_BODY.md
-          echo '---' >> CHANGELOG_BODY.md
-          echo >> CHANGELOG_BODY.md
-          cat artifacts/scorecard/SCORECARD.md >> CHANGELOG_BODY.md
-        fi
 
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          artifacts/*rolypoly-*
-        prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
-        body_path: CHANGELOG_BODY.md
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate changelog
+        shell: bash
+        run: |
+          bash scripts/changelog.sh "${GITHUB_REF_NAME}" > CHANGELOG_BODY.md
+          if [ -f artifacts/scorecard/SCORECARD.md ]; then
+            echo >> CHANGELOG_BODY.md
+            echo '---' >> CHANGELOG_BODY.md
+            echo >> CHANGELOG_BODY.md
+            cat artifacts/scorecard/SCORECARD.md >> CHANGELOG_BODY.md
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/*rolypoly-*
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
+          body_path: CHANGELOG_BODY.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

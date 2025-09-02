@@ -3,12 +3,12 @@ use std::fs;
 use std::process::Command;
 use tempfile::TempDir;
 use tokio::process::Command as TokioCommand;
-use tokio::time::{sleep, Duration};
+use tokio::time::{Duration, sleep};
 
 #[tokio::test]
 async fn test_gui_launch_and_close() {
     let output = TokioCommand::new("cargo")
-        .args(&["run", "--features", "gui", "--bin", "rolypoly-gui"]) 
+        .args(["run", "--features", "gui", "--bin", "rolypoly-gui"])
         .kill_on_drop(true)
         .spawn();
 
@@ -35,7 +35,7 @@ async fn test_cli_create_and_extract() {
 
     // Create archive
     let output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "rolypoly",
@@ -57,7 +57,7 @@ async fn test_cli_create_and_extract() {
     // Extract archive
     fs::create_dir_all(&extract_dir).unwrap();
     let output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "rolypoly",
@@ -94,7 +94,7 @@ async fn test_cli_list_archive() {
 
     // Create archive
     let output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "rolypoly",
@@ -110,7 +110,7 @@ async fn test_cli_list_archive() {
 
     // List archive contents
     let output = Command::new("cargo")
-        .args(&["run", "--bin", "rolypoly", "--", "list", archive_path.to_str().unwrap()])
+        .args(["run", "--bin", "rolypoly", "--", "list", archive_path.to_str().unwrap()])
         .output()
         .expect("Failed to list archive");
 
@@ -135,7 +135,7 @@ async fn test_cli_validate_archive() {
 
     // Create archive
     let output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "rolypoly",
@@ -151,7 +151,7 @@ async fn test_cli_validate_archive() {
 
     // Validate archive
     let output = Command::new("cargo")
-        .args(&["run", "--bin", "rolypoly", "--", "validate", archive_path.to_str().unwrap()])
+        .args(["run", "--bin", "rolypoly", "--", "validate", archive_path.to_str().unwrap()])
         .output()
         .expect("Failed to validate archive");
 
@@ -176,7 +176,7 @@ async fn test_cli_stats_archive() {
 
     // Create archive
     let output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "rolypoly",
@@ -192,7 +192,7 @@ async fn test_cli_stats_archive() {
 
     // Get archive stats
     let output = Command::new("cargo")
-        .args(&["run", "--bin", "rolypoly", "--", "stats", archive_path.to_str().unwrap()])
+        .args(["run", "--bin", "rolypoly", "--", "stats", archive_path.to_str().unwrap()])
         .output()
         .expect("Failed to get archive stats");
 
@@ -219,7 +219,7 @@ async fn test_cli_hash_file() {
 
     // Calculate hash
     let output = Command::new("cargo")
-        .args(&["run", "--bin", "rolypoly", "--", "hash", test_file.to_str().unwrap()])
+        .args(["run", "--bin", "rolypoly", "--", "hash", test_file.to_str().unwrap()])
         .output()
         .expect("Failed to calculate hash");
 
@@ -230,7 +230,7 @@ async fn test_cli_hash_file() {
     );
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.len() > 0, "Hash output is empty");
+    assert!(!stdout.is_empty(), "Hash output is empty");
     assert!(stdout.contains("SHA256") || stdout.len() == 64, "Hash output format unexpected");
 }
 
@@ -247,7 +247,7 @@ async fn test_multiple_files_archive() {
 
     // Create archive with multiple files
     let output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "rolypoly",
@@ -269,7 +269,7 @@ async fn test_multiple_files_archive() {
 
     // List archive contents
     let output = Command::new("cargo")
-        .args(&["run", "--bin", "rolypoly", "--", "list", archive_path.to_str().unwrap()])
+        .args(["run", "--bin", "rolypoly", "--", "list", archive_path.to_str().unwrap()])
         .output()
         .expect("Failed to list archive");
 
@@ -290,7 +290,7 @@ async fn test_error_handling_invalid_archive() {
 
     // Try to list invalid archive
     let output = Command::new("cargo")
-        .args(&["run", "--bin", "rolypoly", "--", "list", fake_archive.to_str().unwrap()])
+        .args(["run", "--bin", "rolypoly", "--", "list", fake_archive.to_str().unwrap()])
         .output()
         .expect("Failed to run list command");
 
@@ -311,7 +311,7 @@ async fn test_error_handling_missing_file() {
 
     // Try to create archive with missing file
     let output = Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "rolypoly",

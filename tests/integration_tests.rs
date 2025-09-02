@@ -39,7 +39,7 @@ fn create_test_files(dir: &Path) -> Result<()> {
 fn test_end_to_end_archive_workflow() -> Result<()> {
     // Ensure release binary exists
     if !Path::new("./target/release/rolypoly").exists() {
-        Command::new("cargo").args(&["build", "--release"]).status()?;
+        Command::new("cargo").args(["build", "--release"]).status()?;
     }
 
     let temp_dir = TempDir::new()?;
@@ -168,7 +168,7 @@ fn test_end_to_end_archive_workflow() -> Result<()> {
 fn test_error_handling_scenarios() -> Result<()> {
     // Ensure release binary exists
     if !Path::new("./target/release/rolypoly").exists() {
-        Command::new("cargo").args(&["build", "--release"]).status()?;
+        Command::new("cargo").args(["build", "--release"]).status()?;
     }
 
     let temp_dir = TempDir::new()?;
@@ -191,8 +191,7 @@ fn test_error_handling_scenarios() -> Result<()> {
     assert!(!output.status.success(), "Should fail with no files");
 
     // Test 3: Extract non-existent archive
-    let output =
-        run_rp_command(&["extract", work_dir.join("nonexistent.zip").to_str().unwrap()])?;
+    let output = run_rp_command(&["extract", work_dir.join("nonexistent.zip").to_str().unwrap()])?;
 
     assert!(!output.status.success(), "Should fail with non-existent archive");
 
@@ -202,8 +201,7 @@ fn test_error_handling_scenarios() -> Result<()> {
     assert!(!output.status.success(), "Should fail with non-existent archive");
 
     // Test 5: Validate non-existent archive
-    let output =
-        run_rp_command(&["validate", work_dir.join("nonexistent.zip").to_str().unwrap()])?;
+    let output = run_rp_command(&["validate", work_dir.join("nonexistent.zip").to_str().unwrap()])?;
 
     assert!(!output.status.success(), "Should fail with non-existent archive");
 
@@ -219,7 +217,7 @@ fn test_error_handling_scenarios() -> Result<()> {
 fn test_large_file_handling() -> Result<()> {
     // Ensure release binary exists
     if !Path::new("./target/release/rolypoly").exists() {
-        Command::new("cargo").args(&["build", "--release"]).status()?;
+        Command::new("cargo").args(["build", "--release"]).status()?;
     }
 
     let temp_dir = TempDir::new()?;
@@ -234,11 +232,8 @@ fn test_large_file_handling() -> Result<()> {
     let extract_dir = work_dir.join("extracted");
 
     // Create archive with large file
-    let output = run_rp_command(&[
-        "create",
-        archive_path.to_str().unwrap(),
-        large_file.to_str().unwrap(),
-    ])?;
+    let output =
+        run_rp_command(&["create", archive_path.to_str().unwrap(), large_file.to_str().unwrap()])?;
 
     assert!(
         output.status.success(),
@@ -281,7 +276,7 @@ fn test_large_file_handling() -> Result<()> {
 fn test_special_characters_and_unicode() -> Result<()> {
     // Ensure release binary exists
     if !Path::new("./target/release/rolypoly").exists() {
-        Command::new("cargo").args(&["build", "--release"]).status()?;
+        Command::new("cargo").args(["build", "--release"]).status()?;
     }
 
     let temp_dir = TempDir::new()?;
@@ -350,7 +345,7 @@ fn test_special_characters_and_unicode() -> Result<()> {
 fn test_compression_effectiveness() -> Result<()> {
     // Ensure release binary exists
     if !Path::new("./target/release/rolypoly").exists() {
-        Command::new("cargo").args(&["build", "--release"]).status()?;
+        Command::new("cargo").args(["build", "--release"]).status()?;
     }
 
     let temp_dir = TempDir::new()?;
@@ -405,7 +400,7 @@ fn test_compression_effectiveness() -> Result<()> {
 fn test_concurrent_operations() -> Result<()> {
     // Ensure release binary exists
     if !Path::new("./target/release/rolypoly").exists() {
-        Command::new("cargo").args(&["build", "--release"]).status()?;
+        Command::new("cargo").args(["build", "--release"]).status()?;
     }
 
     let temp_dir = TempDir::new()?;
@@ -454,7 +449,7 @@ fn test_concurrent_operations() -> Result<()> {
 fn test_cli_help_and_version() -> Result<()> {
     // Ensure release binary exists
     if !Path::new("./target/release/rolypoly").exists() {
-        Command::new("cargo").args(&["build", "--release"]).status()?;
+        Command::new("cargo").args(["build", "--release"]).status()?;
     }
 
     // Test --help

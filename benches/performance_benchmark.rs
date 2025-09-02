@@ -95,7 +95,7 @@ fn benchmark_rolypoly_create(
 ) -> Result<BenchmarkResult, Box<dyn std::error::Error>> {
     // Build rolypoly if needed
     if !Path::new("./target/release/rolypoly").exists() {
-        Command::new("cargo").args(&["build", "--release"]).status()?;
+        Command::new("cargo").args(["build", "--release"]).status()?;
     }
 
     let files: Vec<_> = fs::read_dir(test_dir)?
@@ -146,15 +146,17 @@ fn benchmark_rolypoly_extract(
     let start = Instant::now();
 
     let output = Command::new("./target/release/rolypoly")
-        .args(&["extract", archive_path.to_str().unwrap(), "-o", extract_dir.to_str().unwrap()])
+        .args(["extract", archive_path.to_str().unwrap(), "-o", extract_dir.to_str().unwrap()])
         .output()?;
 
     let elapsed = start.elapsed();
 
     if !output.status.success() {
-        return Err(
-            format!("rolypoly extract failed: {}", String::from_utf8_lossy(&output.stderr)).into()
-        );
+        return Err(format!(
+            "rolypoly extract failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        )
+        .into());
     }
 
     Ok(BenchmarkResult::new(
@@ -175,7 +177,7 @@ fn benchmark_system_zip_create(
     let start = Instant::now();
 
     let output = Command::new("zip")
-        .args(&["-r", archive_path.to_str().unwrap(), "."])
+        .args(["-r", archive_path.to_str().unwrap(), "."])
         .current_dir(test_dir)
         .output()?;
 
@@ -211,7 +213,7 @@ fn benchmark_system_zip_extract(
     let start = Instant::now();
 
     let output = Command::new("unzip")
-        .args(&["-q", archive_path.to_str().unwrap(), "-d", extract_dir.to_str().unwrap()])
+        .args(["-q", archive_path.to_str().unwrap(), "-d", extract_dir.to_str().unwrap()])
         .output()?;
 
     let elapsed = start.elapsed();
@@ -256,8 +258,12 @@ fn run_benchmarks() -> Result<Vec<BenchmarkResult>, Box<dyn std::error::Error>> 
     results.push(rolypoly_create_result);
 
     let rolypoly_extract_dir = temp_dir.path().join("rolypoly_extract");
-    let rolypoly_extract_result =
-        benchmark_rolypoly_extract(&rolypoly_archive, &rolypoly_extract_dir, file_count, total_size_mb)?;
+    let rolypoly_extract_result = benchmark_rolypoly_extract(
+        &rolypoly_archive,
+        &rolypoly_extract_dir,
+        file_count,
+        total_size_mb,
+    )?;
     println!(
         "  Extract: {:.0}ms ({:.2} MB/s)",
         rolypoly_extract_result.time_ms, rolypoly_extract_result.throughput_mbps
@@ -332,10 +338,10 @@ fn print_summary(results: &[BenchmarkResult]) {
     println!("- Platform: {}", std::env::consts::OS);
     println!("- Architecture: {}", std::env::consts::ARCH);
 
-    if let Ok(output) = Command::new("sysctl").args(&["-n", "hw.ncpu"]).output() {
-        if let Ok(cpu_count) = String::from_utf8(output.stdout) {
-            println!("- CPU Cores: {}", cpu_count.trim());
-        }
+    if let Ok(output) = Command::new("sysctl").args(["-n", "hw.ncpu"]).output()
+        && let Ok(cpu_count) = String::from_utf8(output.stdout)
+    {
+        println!("- CPU Cores: {}", cpu_count.trim());
     }
 }
 

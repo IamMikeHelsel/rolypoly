@@ -22,7 +22,7 @@ pub fn create_test_archive(dir: &TempDir, files: &[(&str, &str)]) -> std::path::
 
     // Create archive using our CLI
     let output = std::process::Command::new("cargo")
-        .args(&["run", "--bin", "rolypoly", "--", "create", archive_path.to_str().unwrap()])
+        .args(["run", "--bin", "rolypoly", "--", "create", archive_path.to_str().unwrap()])
         .args(file_paths.iter().map(|p| p.to_str().unwrap()))
         .output()
         .expect("Failed to create test archive");
@@ -36,7 +36,7 @@ pub fn create_test_archive(dir: &TempDir, files: &[(&str, &str)]) -> std::path::
 
 pub fn extract_archive(archive_path: &Path, output_dir: &Path) -> Result<(), String> {
     let output = std::process::Command::new("cargo")
-        .args(&[
+        .args([
             "run",
             "--bin",
             "rolypoly",
@@ -58,7 +58,7 @@ pub fn extract_archive(archive_path: &Path, output_dir: &Path) -> Result<(), Str
 
 pub fn list_archive_contents(archive_path: &Path) -> Result<String, String> {
     let output = std::process::Command::new("cargo")
-        .args(&["run", "--bin", "rolypoly", "--", "list", archive_path.to_str().unwrap()])
+        .args(["run", "--bin", "rolypoly", "--", "list", archive_path.to_str().unwrap()])
         .output()
         .expect("Failed to list archive");
 
@@ -71,7 +71,7 @@ pub fn list_archive_contents(archive_path: &Path) -> Result<String, String> {
 
 pub fn validate_archive(archive_path: &Path) -> Result<String, String> {
     let output = std::process::Command::new("cargo")
-        .args(&["run", "--bin", "rolypoly", "--", "validate", archive_path.to_str().unwrap()])
+        .args(["run", "--bin", "rolypoly", "--", "validate", archive_path.to_str().unwrap()])
         .output()
         .expect("Failed to validate archive");
 
@@ -85,7 +85,7 @@ pub fn validate_archive(archive_path: &Path) -> Result<String, String> {
 #[allow(dead_code)]
 pub fn get_archive_stats(archive_path: &Path) -> Result<String, String> {
     let output = std::process::Command::new("cargo")
-        .args(&["run", "--bin", "rolypoly", "--", "stats", archive_path.to_str().unwrap()])
+        .args(["run", "--bin", "rolypoly", "--", "stats", archive_path.to_str().unwrap()])
         .output()
         .expect("Failed to get archive stats");
 
@@ -98,7 +98,7 @@ pub fn get_archive_stats(archive_path: &Path) -> Result<String, String> {
 
 pub fn calculate_file_hash(file_path: &Path) -> Result<String, String> {
     let output = std::process::Command::new("cargo")
-        .args(&["run", "--bin", "rolypoly", "--", "hash", file_path.to_str().unwrap()])
+        .args(["run", "--bin", "rolypoly", "--", "hash", file_path.to_str().unwrap()])
         .output()
         .expect("Failed to calculate hash");
 
