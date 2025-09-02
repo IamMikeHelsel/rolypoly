@@ -97,48 +97,17 @@ jobs:
     - name: Download all artifacts
       uses: actions/download-artifact@v3
       
+    - name: Generate changelog
+      shell: bash
+      run: |
+        bash scripts/changelog.sh "${GITHUB_REF_NAME}" > CHANGELOG_BODY.md
+
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         files: |
           */rolypoly-*
         prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
-        body: |
-          ## Changes
-          
-          * Cross-platform ZIP archiver
-          * Full CLI interface with create, extract, list, validate, stats, and hash commands
-          * Progress indicators for long operations
-          * Comprehensive integrity checking
-          * SHA256 file hashing
-          
-          ## Installation
-          
-          Download the appropriate binary for your platform:
-          - Linux: `rolypoly-linux-x86_64.tar.gz`
-          - Windows: `rolypoly-windows-x86_64.exe.zip`
-          - macOS: `rolypoly-macos-x86_64.tar.gz`
-          
-          ## Usage
-          
-          ```bash
-          # Create archive
-          rolypoly create archive.zip file1.txt file2.txt
-          
-          # Extract archive
-          rolypoly extract archive.zip
-          
-          # List contents
-          rolypoly list archive.zip
-          
-          # Validate integrity
-          rolypoly validate archive.zip
-          
-          # Show statistics
-          rolypoly stats archive.zip
-          
-          # Calculate file hash
-          rolypoly hash file.txt
-          ```
+        body_path: CHANGELOG_BODY.md
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
