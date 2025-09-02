@@ -8,7 +8,7 @@ use tokio::time::{sleep, Duration};
 #[tokio::test]
 async fn test_gui_launch_and_close() {
     let output = TokioCommand::new("cargo")
-        .args(&["run", "--features", "gui", "--bin", "rusty-gui"]) 
+        .args(&["run", "--features", "gui", "--bin", "rolypoly-gui"]) 
         .kill_on_drop(true)
         .spawn();
 

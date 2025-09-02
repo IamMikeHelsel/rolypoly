@@ -4,7 +4,7 @@ use std::path::Path;
 use std::process::Command;
 use tempfile::TempDir;
 
-/// Helper function to run rusty command and capture output
+/// Helper function to run rolypoly command and capture output
 fn run_rp_command(args: &[&str]) -> Result<std::process::Output> {
     // Ensure release binary exists
     if !Path::new("./target/release/rolypoly").exists() {

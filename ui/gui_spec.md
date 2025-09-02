@@ -29,7 +29,7 @@ Provide a modern, dark-themed, WinZip-style client for creating and extracting c
 
 | Ref | Element                           | Function                                                                    |
 | --- | --------------------------------- | --------------------------------------------------------------------------- |
-| A   | **Title-bar** (“RolyPoly”)        | Left-click = About dialog.                                                  |
+| A   | **Title-bar** ("RolyPoly")        | Left-click = About dialog.                                                  |
 | B1  | **Add (+ icon)**                  | Opens OS file picker, appends to file list.                                 |
 | B2  | **Open (folder-arrow icon)**      | Opens archive, replaces view; Ctrl+O shortcut.                              |
 | B3  | **Copy Path (clipboard icon)**    | Copies archive or selected file paths to clipboard.                         |
