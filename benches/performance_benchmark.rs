@@ -93,8 +93,8 @@ fn benchmark_rusty_create(
     test_dir: &Path,
     archive_path: &Path,
 ) -> Result<BenchmarkResult, Box<dyn std::error::Error>> {
-    // Build rusty if needed
-    if !Path::new("./target/release/rusty").exists() {
+    // Build rolypoly if needed
+    if !Path::new("./target/release/rolypoly").exists() {
         Command::new("cargo").args(&["build", "--release"]).status()?;
     }
 
@@ -107,7 +107,7 @@ fn benchmark_rusty_create(
 
     let start = Instant::now();
 
-    let mut cmd = Command::new("./target/release/rusty");
+    let mut cmd = Command::new("./target/release/rolypoly");
     cmd.arg("create").arg(archive_path);
     for file in &files {
         cmd.arg(file);
@@ -118,7 +118,7 @@ fn benchmark_rusty_create(
 
     if !output.status.success() {
         return Err(
-            format!("Rusty create failed: {}", String::from_utf8_lossy(&output.stderr)).into()
+            format!("rolypoly create failed: {}", String::from_utf8_lossy(&output.stderr)).into()
         );
     }
 
@@ -127,7 +127,7 @@ fn benchmark_rusty_create(
 
     Ok(BenchmarkResult::new(
         "create".to_string(),
-        "rusty".to_string(),
+        "rolypoly".to_string(),
         files.len(),
         total_size_mb,
         elapsed.as_millis(),
@@ -145,7 +145,7 @@ fn benchmark_rusty_extract(
 
     let start = Instant::now();
 
-    let output = Command::new("./target/release/rusty")
+    let output = Command::new("./target/release/rolypoly")
         .args(&["extract", archive_path.to_str().unwrap(), "-o", extract_dir.to_str().unwrap()])
         .output()?;
 
@@ -153,13 +153,13 @@ fn benchmark_rusty_extract(
 
     if !output.status.success() {
         return Err(
-            format!("Rusty extract failed: {}", String::from_utf8_lossy(&output.stderr)).into()
+            format!("rolypoly extract failed: {}", String::from_utf8_lossy(&output.stderr)).into()
         );
     }
 
     Ok(BenchmarkResult::new(
         "extract".to_string(),
-        "rusty".to_string(),
+        "rolypoly".to_string(),
         file_count,
         total_size_mb,
         elapsed.as_millis(),
