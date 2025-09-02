@@ -5,6 +5,10 @@ on:
     tags:
       - 'cli-v*'
 
+# Needs write permission to create GitHub Releases
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}

@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+# Minimal token permissions for build/test
+permissions:
+  contents: read
+
 env:
   CARGO_TERM_COLOR: always
 

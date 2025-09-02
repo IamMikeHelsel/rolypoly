@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main, "release/cli", "prerelease/cli" ]
 
+# Minimal token permissions for CI
+permissions:
+  contents: read
+
 env:
   CARGO_TERM_COLOR: always
 

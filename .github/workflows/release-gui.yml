@@ -5,6 +5,10 @@ on:
     tags:
       - 'gui-v*'
 
+# Needs write permission to create GitHub Releases
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -78,4 +82,3 @@ jobs:
             rolypoly-gui-*/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
