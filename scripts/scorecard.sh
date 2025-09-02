@@ -33,10 +33,16 @@ EXTR="$TMP/extract"
 mkdir -p "$EXTR"
 
 measure(){
-  local cmd="$1"; shift
-  local start=$(date +%s%3N)
+  local _name="$1"; shift
+  local start=$(python3 - <<'PY'
+import time; print(int(time.time()*1000))
+PY
+)
   "$@" >/dev/null 2>&1 || true
-  local end=$(date +%s%3N)
+  local end=$(python3 - <<'PY'
+import time; print(int(time.time()*1000))
+PY
+)
   echo $((end-start))
 }
 
@@ -71,4 +77,3 @@ echo >> SCORECARD.md
 echo "Generated at $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> SCORECARD.md
 
 echo "SCORECARD.md"
-
