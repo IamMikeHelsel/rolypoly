@@ -1,11 +1,9 @@
-name: Release
+name: Release CLI
 
 on:
   push:
     tags:
-      - 'v*'
-  pull_request:
-    branches: [ main ]
+      - 'cli-v*'
 
 jobs:
   build:
@@ -16,16 +14,16 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            binary_name: rusty
-            asset_name: rusty-linux-x86_64
+            binary_name: rolypoly
+            asset_name: rolypoly-linux-x86_64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            binary_name: rusty.exe
-            asset_name: rusty-windows-x86_64.exe
+            binary_name: rolypoly.exe
+            asset_name: rolypoly-windows-x86_64.exe
           - os: macOS-latest
             target: x86_64-apple-darwin
-            binary_name: rusty
-            asset_name: rusty-macos-x86_64
+            binary_name: rolypoly
+            asset_name: rolypoly-macos-x86_64
 
     steps:
     - uses: actions/checkout@v3
@@ -38,7 +36,7 @@ jobs:
         default: true
 
     - name: Build
-      run: cargo build --release --target ${{ matrix.target }}
+      run: cargo build --release --target ${{ matrix.target }} --bin rolypoly
 
     - name: Run tests
       run: cargo test --release --target ${{ matrix.target }}
@@ -64,7 +62,7 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/cli-v')
     steps:
     - name: Download all artifacts
       uses: actions/download-artifact@v3
@@ -73,7 +71,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          */rusty-*
+          */rolypoly-*
         body: |
           ## Changes
           
@@ -86,30 +84,30 @@ jobs:
           ## Installation
           
           Download the appropriate binary for your platform:
-          - Linux: `rusty-linux-x86_64.tar.gz`
-          - Windows: `rusty-windows-x86_64.exe.zip`
-          - macOS: `rusty-macos-x86_64.tar.gz`
+          - Linux: `rolypoly-linux-x86_64.tar.gz`
+          - Windows: `rolypoly-windows-x86_64.exe.zip`
+          - macOS: `rolypoly-macos-x86_64.tar.gz`
           
           ## Usage
           
           ```bash
           # Create archive
-          rusty create archive.zip file1.txt file2.txt
+          rolypoly create archive.zip file1.txt file2.txt
           
           # Extract archive
-          rusty extract archive.zip
+          rolypoly extract archive.zip
           
           # List contents
-          rusty list archive.zip
+          rolypoly list archive.zip
           
           # Validate integrity
-          rusty validate archive.zip
+          rolypoly validate archive.zip
           
           # Show statistics
-          rusty stats archive.zip
+          rolypoly stats archive.zip
           
           # Calculate file hash
-          rusty hash file.txt
+          rolypoly hash file.txt
           ```
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

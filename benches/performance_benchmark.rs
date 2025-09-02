@@ -245,8 +245,8 @@ fn run_benchmarks() -> Result<Vec<BenchmarkResult>, Box<dyn std::error::Error>> 
 
     let mut results = Vec::new();
 
-    // Benchmark Rusty
-    println!("Benchmarking Rusty...");
+    // Benchmark RolyPoly
+    println!("Benchmarking RolyPoly...");
     let rusty_archive = temp_dir.path().join("rusty_test.zip");
     let rusty_create_result = benchmark_rusty_create(&test_dir, &rusty_archive)?;
     println!(
@@ -347,9 +347,9 @@ fn performance_benchmark() {
 
             // Assert some basic performance expectations
             let rusty_create =
-                results.iter().find(|r| r.tool == "rusty" && r.operation == "create");
+                results.iter().find(|r| r.tool == "rolypoly" && r.operation == "create");
             let rusty_extract =
-                results.iter().find(|r| r.tool == "rusty" && r.operation == "extract");
+                results.iter().find(|r| r.tool == "rolypoly" && r.operation == "extract");
 
             if let Some(create_result) = rusty_create {
                 assert!(

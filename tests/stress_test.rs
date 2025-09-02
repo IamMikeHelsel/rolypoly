@@ -42,8 +42,8 @@ fn create_large_test_dataset(dir: &Path) -> Result<(usize, f64), Box<dyn std::er
 #[test]
 #[ignore] // Run with cargo test -- --ignored stress_test
 fn stress_test_large_archive() -> Result<(), Box<dyn std::error::Error>> {
-    // Build rusty if needed
-    if !Path::new("./target/release/rusty").exists() {
+    // Build rolypoly if needed
+    if !Path::new("./target/release/rolypoly").exists() {
         Command::new("cargo").args(&["build", "--release"]).status()?;
     }
 
@@ -61,7 +61,7 @@ fn stress_test_large_archive() -> Result<(), Box<dyn std::error::Error>> {
     println!("Testing archive creation...");
     let start = Instant::now();
 
-    let mut cmd = Command::new("./target/release/rusty");
+    let mut cmd = Command::new("./target/release/rolypoly");
     cmd.arg("create").arg(&archive_path);
 
     // Add all files
@@ -97,7 +97,7 @@ fn stress_test_large_archive() -> Result<(), Box<dyn std::error::Error>> {
     // Test validation
     println!("\nTesting archive validation...");
     let start = Instant::now();
-    let output = Command::new("./target/release/rusty")
+    let output = Command::new("./target/release/rolypoly")
         .args(["validate", archive_path.to_str().unwrap()])
         .output()?;
     let validate_time = start.elapsed();
@@ -115,7 +115,7 @@ fn stress_test_large_archive() -> Result<(), Box<dyn std::error::Error>> {
     fs::create_dir(&extract_dir)?;
 
     let start = Instant::now();
-    let output = Command::new("./target/release/rusty")
+    let output = Command::new("./target/release/rolypoly")
         .args(["extract", archive_path.to_str().unwrap(), "-o", extract_dir.to_str().unwrap()])
         .output()?;
     let extract_time = start.elapsed();
@@ -160,8 +160,8 @@ fn stress_test_large_archive() -> Result<(), Box<dyn std::error::Error>> {
 
 #[test]
 fn memory_usage_test() -> Result<(), Box<dyn std::error::Error>> {
-    // Build rusty if needed
-    if !Path::new("./target/release/rusty").exists() {
+    // Build rolypoly if needed
+    if !Path::new("./target/release/rolypoly").exists() {
         Command::new("cargo").args(&["build", "--release"]).status()?;
     }
 
@@ -175,7 +175,7 @@ fn memory_usage_test() -> Result<(), Box<dyn std::error::Error>> {
     let archive_path = temp_dir.path().join("large.zip");
 
     // Test with large file - this should not cause memory issues
-    let output = Command::new("./target/release/rusty")
+    let output = Command::new("./target/release/rolypoly")
         .args(&["create", archive_path.to_str().unwrap(), large_file.to_str().unwrap()])
         .output()?;
 
@@ -186,7 +186,7 @@ fn memory_usage_test() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     // Validate the large archive
-    let output = Command::new("./target/release/rusty")
+    let output = Command::new("./target/release/rolypoly")
         .args(["validate", archive_path.to_str().unwrap()])
         .output()?;
 

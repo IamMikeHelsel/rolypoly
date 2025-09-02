@@ -87,7 +87,7 @@
 
 ## Comparison with Popular Tools
 
-| Operation | Rusty | System zip/unzip | 7-Zip | WinRAR |
+| Operation | RolyPoly | System zip/unzip | 7-Zip | WinRAR |
 |-----------|-------|------------------|-------|--------|
 | Creation Speed | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
 | Extraction Speed | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
@@ -115,8 +115,8 @@
 ### For Maximum Speed
 
 ```bash
-# Use for extraction (Rusty excels here)
-rusty extract large_archive.zip
+# Use for extraction (RolyPoly excels here)
+rolypoly extract large_archive.zip
 
 # Use system tools for creation of very large archives
 zip -r archive.zip directory/
@@ -125,15 +125,15 @@ zip -r archive.zip directory/
 ### For Best User Experience
 
 ```bash
-# Rusty provides excellent progress feedback
-rusty create project.zip src/ docs/ tests/
+# RolyPoly provides excellent progress feedback
+rolypoly create project.zip src/ docs/ tests/
 ```
 
 ### For Integrity
 
 ```bash
-# Rusty has built-in validation
-rusty validate important.zip
+# RolyPoly has built-in validation
+rolypoly validate important.zip
 ```
 
 ## Future Performance Improvements (Roadmap)
@@ -152,7 +152,7 @@ rusty validate important.zip
 
 ## Conclusion
 
-**Rusty is production-ready with excellent extraction performance and solid creation speeds.**
+**RolyPoly is production-ready with excellent extraction performance and solid creation speeds.**
 
 While creation is slower than system tools, the combination of:
 
@@ -161,4 +161,4 @@ While creation is slower than system tools, the combination of:
 - Rock-solid reliability  
 - Great user experience
 
-Makes Rusty an excellent choice for most ZIP archiving needs, especially when extraction performance and user experience are priorities.
+Makes RolyPoly an excellent choice for most ZIP archiving needs, especially when extraction performance and user experience are priorities.

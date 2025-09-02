@@ -66,7 +66,7 @@ async fn test_gui_with_large_archive() {
         .args(&[
             "run",
             "--bin",
-            "rusty",
+            "rolypoly",
             "--",
             "create",
             archive_path.to_str().unwrap(),
@@ -108,7 +108,7 @@ async fn test_gui_stress_test() {
 
     // Create archive with many files
     let archive_path = temp_dir.path().join("stress.zip");
-    let mut args = vec!["run", "--bin", "rusty", "--", "create", archive_path.to_str().unwrap()];
+    let mut args = vec!["run", "--bin", "rolypoly", "--", "create", archive_path.to_str().unwrap()];
     for file in &files {
         args.push(file.to_str().unwrap());
     }

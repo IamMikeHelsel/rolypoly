@@ -1,6 +1,7 @@
 use crate::archive::ArchiveManager;
 use anyhow::Result;
-use clap::{Parser, Subcommand};
+use clap::{ArgAction, Parser, Subcommand};
+use serde::Serialize;
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -8,6 +9,13 @@ use std::path::PathBuf;
 #[command(about = "A modern ZIP archiver written in Rust")]
 #[command(version = "0.1.0")]
 pub struct Cli {
+    /// Emit machine-readable JSON to stdout
+    #[arg(long, global = true, action = ArgAction::SetTrue)]
+    pub json: bool,
+
+    /// Emit progress updates (JSON if --json, otherwise human)
+    #[arg(long, global = true, action = ArgAction::SetTrue)]
+    pub progress: bool,
     #[command(subcommand)]
     pub command: Commands,
 }
@@ -60,64 +68,84 @@ impl Cli {
                 if files.is_empty() {
                     return Err(anyhow::anyhow!("No files specified to add to archive"));
                 }
-
-                println!("Creating archive: {}", archive.display());
                 let file_refs: Vec<&PathBuf> = files.iter().collect();
                 manager.create_archive(&archive, &file_refs)?;
-                println!("Archive created successfully!");
+                if self.json {
+                    #[derive(Serialize)]
+                    struct Out<'a> { event: &'a str, archive: String }
+                    println!("{}", serde_json::to_string(&Out { event: "created", archive: archive.display().to_string() })?);
+                }
+                // Otherwise progress and completion messages are handled by the archiver
             }
             Commands::Extract { archive, output } => {
-                println!("Extracting archive: {} to {}", archive.display(), output.display());
                 manager.extract_archive(&archive, &output)?;
-                println!("Archive extracted successfully!");
+                if self.json {
+                    #[derive(Serialize)]
+                    struct Out<'a> { event: &'a str, archive: String, output: String }
+                    println!("{}", serde_json::to_string(&Out { event: "extracted", archive: archive.display().to_string(), output: output.display().to_string() })?);
+                }
+                // Otherwise progress and completion messages are handled by the archiver
             }
             Commands::List { archive } => {
-                println!("Contents of archive: {}", archive.display());
                 let contents = manager.list_archive(&archive)?;
-                if contents.is_empty() {
-                    println!("Archive is empty");
+                if self.json {
+                    #[derive(Serialize)]
+                    struct Out { archive: String, files: Vec<String> }
+                    println!("{}", serde_json::to_string(&Out { archive: archive.display().to_string(), files: contents })?);
                 } else {
-                    for item in contents {
-                        println!("  {item}");
+                    println!("Archive: {}", archive.display());
+                    if contents.is_empty() {
+                        println!("Archive is empty");
+                    } else {
+                        for item in contents { println!("  {item}"); }
                     }
                 }
             }
             Commands::Validate { archive } => {
-                println!("Validating archive: {}", archive.display());
                 let is_valid = manager.validate_archive(&archive)?;
-                if is_valid {
-                    println!("✓ Archive is valid and all files passed integrity checks");
+                if self.json {
+                    #[derive(Serialize)]
+                    struct Out { archive: String, valid: bool }
+                    println!("{}", serde_json::to_string(&Out { archive: archive.display().to_string(), valid: is_valid })?);
                 } else {
-                    println!("✗ Archive validation failed");
+                    if is_valid {
+                        println!("✓ Archive is valid and all files passed integrity checks");
+                    } else {
+                        println!("✗ Archive validation failed");
+                    }
                 }
             }
             Commands::Stats { archive } => {
-                println!("Analyzing archive: {}", archive.display());
                 let stats = manager.get_archive_stats(&archive)?;
-                println!("Archive Statistics:");
-                println!("  Files: {}", stats.file_count);
-                println!("  Directories: {}", stats.dir_count);
-                println!("  Uncompressed size: {} bytes", stats.total_uncompressed_size);
-                println!("  Compressed size: {} bytes", stats.total_compressed_size);
-                println!("  Compression ratio: {:.1}%", stats.compression_ratio);
-                if stats.total_uncompressed_size > 0 {
-                    if stats.total_uncompressed_size > stats.total_compressed_size {
-                        let space_saved =
-                            stats.total_uncompressed_size - stats.total_compressed_size;
-                        println!("  Space saved: {space_saved} bytes");
-                    } else {
-                        let space_increased =
-                            stats.total_compressed_size - stats.total_uncompressed_size;
-                        println!(
-                            "  Space increased: {space_increased} bytes (due to compression overhead)"
-                        );
+                if self.json {
+                    println!("{}", serde_json::to_string(&stats)?);
+                } else {
+                    println!("Archive Statistics:");
+                    println!("  Files: {}", stats.file_count);
+                    println!("  Directories: {}", stats.dir_count);
+                    println!("  Uncompressed size: {} bytes", stats.total_uncompressed_size);
+                    println!("  Compressed size: {} bytes", stats.total_compressed_size);
+                    println!("  Compression ratio: {:.1}%", stats.compression_ratio);
+                    if stats.total_uncompressed_size > 0 {
+                        if stats.total_uncompressed_size > stats.total_compressed_size {
+                            let space_saved = stats.total_uncompressed_size - stats.total_compressed_size;
+                            println!("  Space saved: {space_saved} bytes");
+                        } else {
+                            let space_increased = stats.total_compressed_size - stats.total_uncompressed_size;
+                            println!("  Space increased: {space_increased} bytes (due to compression overhead)");
+                        }
                     }
                 }
             }
             Commands::Hash { file } => {
-                println!("Calculating SHA256 hash for: {}", file.display());
                 let hash = manager.calculate_file_hash(&file)?;
-                println!("SHA256: {hash}");
+                if self.json {
+                    #[derive(Serialize)]
+                    struct Out { file: String, algo: &'static str, hash: String }
+                    println!("{}", serde_json::to_string(&Out { file: file.display().to_string(), algo: "sha256", hash })?);
+                } else {
+                    println!("SHA256: {hash}");
+                }
             }
         }
 

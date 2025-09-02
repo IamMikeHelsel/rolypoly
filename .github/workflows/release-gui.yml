@@ -1,0 +1,81 @@
+name: Release GUI
+
+on:
+  push:
+    tags:
+      - 'gui-v*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Enable desktop targets
+        run: |
+          flutter config --enable-macos-desktop --enable-windows-desktop --enable-linux-desktop
+
+      - name: Install Linux system deps
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev liblzma-dev libstdc++-12-dev ninja-build libglu1-mesa-dev
+
+      - name: Prepare GUI project
+        working-directory: gui
+        run: |
+          # Create platform folders if missing
+          flutter create .
+          flutter pub get
+
+      - name: Analyze
+        working-directory: gui
+        run: flutter analyze
+
+      - name: Run widget tests
+        working-directory: gui
+        run: flutter test
+
+      - name: Build GUI
+        working-directory: gui
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            flutter build windows --release
+          elif [[ "${{ matrix.os }}" == "macOS-latest" ]]; then
+            flutter build macos --release
+          else
+            flutter build linux --release
+          fi
+
+      - name: Upload GUI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rolypoly-gui-${{ matrix.os }}
+          path: |
+            gui/build/**/release/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/gui-v')
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            rolypoly-gui-*/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

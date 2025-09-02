@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is "rusty" - a Rust-based compression utility similar to WinZip. The project is currently in early development with minimal infrastructure in place.
+This is "rolypoly" - a Rust-based compression utility similar to WinZip. The project is currently in early development with minimal infrastructure in place.
 
 ## Current State
 
@@ -28,12 +28,12 @@ The repository contains:
 
 The application supports these commands:
 
-- `rusty create <archive_name> <file1> <file2> ...` - Create a new ZIP archive
-- `rusty extract <archive_name> [-o output_dir]` - Extract a ZIP archive
-- `rusty list <archive_name>` - List contents of a ZIP archive
-- `rusty validate <archive_name>` - Validate archive integrity and check for corruption
-- `rusty stats <archive_name>` - Show detailed statistics about an archive
-- `rusty hash <file>` - Calculate SHA256 hash of a file
+- `rolypoly create <archive_name> <file1> <file2> ...` - Create a new ZIP archive
+- `rolypoly extract <archive_name> [-o output_dir]` - Extract a ZIP archive
+- `rolypoly list <archive_name>` - List contents of a ZIP archive
+- `rolypoly validate <archive_name>` - Validate archive integrity and check for corruption
+- `rolypoly stats <archive_name>` - Show detailed statistics about an archive
+- `rolypoly hash <file>` - Calculate SHA256 hash of a file
 
 ## Features
 

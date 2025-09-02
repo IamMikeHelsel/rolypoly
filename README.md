@@ -1,4 +1,4 @@
-# 🗜️ Rusty - Modern ZIP Archiver
+# 🗜️ RolyPoly - Modern ZIP Archiver
 
 A high-performance, cross-platform ZIP archiver written in Rust. Like WinZip, but faster, safer, and with a modern CLI.
 
@@ -21,7 +21,7 @@ A high-performance, cross-platform ZIP archiver written in Rust. Like WinZip, bu
 
 ## 🚀 Performance
 
-| Operation | Rusty | System Tools | Improvement |
+| Operation | RolyPoly | System Tools | Improvement |
 |-----------|-------|--------------|-------------|
 | **Extraction** | 279 MB/s | 143 MB/s | **+95% faster** |
 | **Creation** | 34 MB/s | 199 MB/s | -83% slower |
@@ -35,15 +35,15 @@ A high-performance, cross-platform ZIP archiver written in Rust. Like WinZip, bu
 
 Download the latest release for your platform:
 
-- **Linux**: `rusty-linux-x86_64.tar.gz`
-- **Windows**: `rusty-windows-x86_64.exe.zip`  
-- **macOS**: `rusty-macos-x86_64.tar.gz`
+- **Linux**: `rolypoly-linux-x86_64.tar.gz`
+- **Windows**: `rolypoly-windows-x86_64.exe.zip`  
+- **macOS**: `rolypoly-macos-x86_64.tar.gz`
 
 ### Build from Source
 
 ```bash
-git clone https://github.com/user/rusty.git
-cd rusty
+git clone https://github.com/user/rolypoly.git
+cd rolypoly
 cargo build --release
 ```
 
@@ -51,49 +51,45 @@ cargo build --release
 
 ### Download Pre-built Binaries
 
-**Latest Release**: [Download from GitHub Releases](https://github.com/user/rusty/releases/latest)
+**Latest Release**: [Download from GitHub Releases](https://github.com/user/rolypoly/releases/latest)
 
 #### macOS
 ```bash
 # Apple Silicon (M1/M2/M3)
-wget https://github.com/user/rusty/releases/latest/download/Rusty_v0.1.0_aarch64.dmg
+wget https://github.com/user/rolypoly/releases/latest/download/RolyPoly_v0.1.0_aarch64.dmg
 
 # Intel
-wget https://github.com/user/rusty/releases/latest/download/Rusty_v0.1.0_x64.dmg
+wget https://github.com/user/rolypoly/releases/latest/download/RolyPoly_v0.1.0_x64.dmg
 ```
 
 #### Windows
 ```powershell
 # Download and install MSI package
-Invoke-WebRequest https://github.com/user/rusty/releases/latest/download/Rusty_v0.1.0_x64_en-US.msi -OutFile Rusty.msi
-Start-Process msiexec.exe -ArgumentList '/i', 'Rusty.msi', '/quiet' -Wait
+Invoke-WebRequest https://github.com/user/rolypoly/releases/latest/download/RolyPoly_v0.1.0_x64_en-US.msi -OutFile RolyPoly.msi
+Start-Process msiexec.exe -ArgumentList '/i', 'RolyPoly.msi', '/quiet' -Wait
 ```
 
 #### Linux
 ```bash
 # AppImage (universal)
-wget https://github.com/user/rusty/releases/latest/download/Rusty_v0.1.0_amd64.AppImage
-chmod +x Rusty_v0.1.0_amd64.AppImage
-./Rusty_v0.1.0_amd64.AppImage
+wget https://github.com/user/rolypoly/releases/latest/download/RolyPoly_v0.1.0_amd64.AppImage
+chmod +x RolyPoly_v0.1.0_amd64.AppImage
+./RolyPoly_v0.1.0_amd64.AppImage
 
 # Debian/Ubuntu
-wget https://github.com/user/rusty/releases/latest/download/rusty_v0.1.0_amd64.deb
-sudo dpkg -i rusty_v0.1.0_amd64.deb
+wget https://github.com/user/rolypoly/releases/latest/download/rolypoly_v0.1.0_amd64.deb
+sudo dpkg -i rolypoly_v0.1.0_amd64.deb
 ```
 
 ### Build from Source
 
 ```bash
 # Clone the repository
-git clone https://github.com/user/rusty.git
-cd rusty
+git clone https://github.com/user/rolypoly.git
+cd rolypoly
 
 # Build CLI only
-cargo build --release --bin rusty
-
-# Build GUI (requires Tauri CLI)
-cargo install tauri-cli
-cargo tauri build
+cargo build --release --bin rolypoly
 
 # Install CLI globally
 cargo install --path .
@@ -105,25 +101,25 @@ cargo install --path .
 
 ```bash
 # Create an archive
-rusty create archive.zip file1.txt file2.txt directory/
+rolypoly create archive.zip file1.txt file2.txt directory/
 
 # Extract an archive  
-rusty extract archive.zip
+rolypoly extract archive.zip
 
 # Extract to specific directory
-rusty extract archive.zip -o /path/to/output
+rolypoly extract archive.zip -o /path/to/output
 
 # List archive contents
-rusty list archive.zip
+rolypoly list archive.zip
 
 # Validate archive integrity
-rusty validate archive.zip
+rolypoly validate archive.zip
 
 # Show detailed statistics
-rusty stats archive.zip
+rolypoly stats archive.zip
 
 # Calculate file hash
-rusty hash important_file.txt
+rolypoly hash important_file.txt
 ```
 
 ### 🖥️ GUI Application
@@ -131,11 +127,7 @@ rusty hash important_file.txt
 Launch the graphical interface:
 
 ```bash
-# On macOS/Linux
-rusty-app
-
-# On Windows
-start Rusty.exe
+# GUI build pending (Flutter); see gui/ for progress
 ```
 
 **GUI Features:**
@@ -150,13 +142,13 @@ start Rusty.exe
 
 ```bash
 # Archive entire project with progress
-rusty create project.zip src/ docs/ tests/ README.md
+rolypoly create project.zip src/ docs/ tests/ README.md
 
 # Validate multiple archives
-for archive in *.zip; do rusty validate "$archive"; done
+for archive in *.zip; do rolypoly validate "$archive"; done
 
 # Get compression statistics
-rusty stats large_archive.zip
+rolypoly stats large_archive.zip
 ```
 
 ## 📊 Performance Details

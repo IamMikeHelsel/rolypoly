@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Cross-platform release build script for Rusty
+# Cross-platform release build script for RolyPoly
 # This script builds release binaries for all supported platforms
 
 set -e
 
-echo "🚀 Building Rusty for all platforms..."
+echo "🚀 Building RolyPoly for all platforms..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -51,7 +51,7 @@ build_target() {
 # Function to create Linux AppImage
 create_appimage() {
     local target=$1
-    local appdir="releases/Rusty-$target.AppDir"
+    local appdir="releases/RolyPoly-$target.AppDir"
     
     # Create AppDir structure
     mkdir -p "$appdir/usr/bin"
@@ -59,71 +59,71 @@ create_appimage() {
     mkdir -p "$appdir/usr/share/icons/hicolor/256x256/apps"
     
     # Copy binary
-    cp "target/$target/release/rusty" "$appdir/usr/bin/"
+    cp "target/$target/release/rolypoly" "$appdir/usr/bin/"
     
     # Create desktop file
-    cat > "$appdir/usr/share/applications/rusty.desktop" << 'EOF'
+    cat > "$appdir/usr/share/applications/rolypoly.desktop" << 'EOF'
 [Desktop Entry]
-Name=Rusty
-Exec=rusty
-Icon=rusty
+Name=RolyPoly
+Exec=rolypoly
+Icon=rolypoly
 Type=Application
 Categories=Utility;Archiving;
 Comment=Modern ZIP archiver written in Rust
 EOF
     
     # Copy icon
-    cp "icons/icon.png" "$appdir/usr/share/icons/hicolor/256x256/apps/rusty.png"
+    cp "icons/icon.png" "$appdir/usr/share/icons/hicolor/256x256/apps/rolypoly.png"
     
     # Create AppRun
     cat > "$appdir/AppRun" << 'EOF'
 #!/bin/bash
 HERE="$(dirname "$(readlink -f "${0}")")"
-exec "${HERE}/usr/bin/rusty" "$@"
+exec "${HERE}/usr/bin/rolypoly" "$@"
 EOF
     chmod +x "$appdir/AppRun"
     
     # Create tarball
     cd releases
-    tar -czf "rusty-linux-x86_64.tar.gz" "Rusty-$target.AppDir"
+    tar -czf "rolypoly-linux-x86_64.tar.gz" "RolyPoly-$target.AppDir"
     cd ..
 }
 
 # Function to create Windows package
 create_windows_package() {
     local target=$1
-    local windir="releases/rusty-windows-x86_64"
+    local windir="releases/rolypoly-windows-x86_64"
     
     mkdir -p "$windir"
     
     # Copy binary
-    cp "target/$target/release/rusty.exe" "$windir/"
+    cp "target/$target/release/rolypoly.exe" "$windir/"
     
     # Create installer script
     cat > "$windir/install.bat" << 'EOF'
 @echo off
-echo Installing Rusty...
-if not exist "%ProgramFiles%\Rusty" mkdir "%ProgramFiles%\Rusty"
-copy rusty.exe "%ProgramFiles%\Rusty\rusty.exe"
+echo Installing RolyPoly...
+if not exist "%ProgramFiles%\RolyPoly" mkdir "%ProgramFiles%\RolyPoly"
+copy rolypoly.exe "%ProgramFiles%\RolyPoly\rolypoly.exe"
 echo.
 echo Installation complete!
-echo You can now run 'rusty' from the command line.
+echo You can now run 'rolypoly' from the command line.
 pause
 EOF
     
     # Create uninstaller
     cat > "$windir/uninstall.bat" << 'EOF'
 @echo off
-echo Uninstalling Rusty...
-if exist "%ProgramFiles%\Rusty\rusty.exe" del "%ProgramFiles%\Rusty\rusty.exe"
-if exist "%ProgramFiles%\Rusty" rmdir "%ProgramFiles%\Rusty"
+echo Uninstalling RolyPoly...
+if exist "%ProgramFiles%\RolyPoly\rolypoly.exe" del "%ProgramFiles%\RolyPoly\rolypoly.exe"
+if exist "%ProgramFiles%\RolyPoly" rmdir "%ProgramFiles%\RolyPoly"
 echo Uninstallation complete!
 pause
 EOF
     
     # Create ZIP package
     cd releases
-    zip -r "rusty-windows-x86_64.zip" "rusty-windows-x86_64"
+    zip -r "rolypoly-windows-x86_64.zip" "rolypoly-windows-x86_64"
     cd ..
 }
 
@@ -141,14 +141,14 @@ create_macos_bundle() {
             ;;
     esac
     
-    local bundle_dir="releases/Rusty-$arch.app"
+    local bundle_dir="releases/RolyPoly-$arch.app"
     
     # Create bundle structure
     mkdir -p "$bundle_dir/Contents/MacOS"
     mkdir -p "$bundle_dir/Contents/Resources"
     
     # Copy binary
-    cp "target/$target/release/rusty" "$bundle_dir/Contents/MacOS/"
+    cp "target/$target/release/rolypoly" "$bundle_dir/Contents/MacOS/"
     
     # Copy icon
     cp "icons/icon.icns" "$bundle_dir/Contents/Resources/"
@@ -160,11 +160,11 @@ create_macos_bundle() {
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key>
-    <string>rusty</string>
+    <string>rolypoly</string>
     <key>CFBundleIdentifier</key>
-    <string>com.rusty.archiver</string>
+    <string>com.rolypoly.archiver</string>
     <key>CFBundleName</key>
-    <string>Rusty</string>
+    <string>RolyPoly</string>
     <key>CFBundleVersion</key>
     <string>1.0</string>
     <key>CFBundleShortVersionString</key>
@@ -174,7 +174,7 @@ create_macos_bundle() {
     <key>LSMinimumSystemVersion</key>
     <string>10.14</string>
     <key>NSHumanReadableCopyright</key>
-    <string>Copyright © 2024 Rusty. All rights reserved.</string>
+    <string>Copyright © 2024 RolyPoly. All rights reserved.</string>
     <key>NSHighResolutionCapable</key>
     <true/>
 </dict>
@@ -183,7 +183,7 @@ EOF
     
     # Create DMG
     cd releases
-    hdiutil create -volname "Rusty" -srcfolder "Rusty-$arch.app" -ov -format UDZO "rusty-macos-$arch.dmg"
+    hdiutil create -volname "RolyPoly" -srcfolder "RolyPoly-$arch.app" -ov -format UDZO "rolypoly-macos-$arch.dmg"
     cd ..
 }
 

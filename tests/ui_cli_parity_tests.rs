@@ -18,7 +18,7 @@ async fn test_cli_gui_parity_create_archive() -> Result<()> {
         .args(&[
             "run",
             "--bin",
-            "rusty",
+            "rolypoly",
             "--",
             "create",
             cli_archive.to_str().unwrap(),
@@ -80,7 +80,7 @@ async fn test_cli_gui_parity_extract_archive() -> Result<()> {
         .args(&[
             "run",
             "--bin",
-            "rusty",
+            "rolypoly",
             "--",
             "create",
             archive_path.to_str().unwrap(),
@@ -97,7 +97,7 @@ async fn test_cli_gui_parity_extract_archive() -> Result<()> {
         .args(&[
             "run",
             "--bin",
-            "rusty",
+            "rolypoly",
             "--",
             "extract",
             archive_path.to_str().unwrap(),
@@ -135,7 +135,7 @@ async fn test_cli_gui_parity_validate_archive() -> Result<()> {
         .args(&[
             "run",
             "--bin",
-            "rusty",
+            "rolypoly",
             "--",
             "create",
             archive_path.to_str().unwrap(),
@@ -147,7 +147,7 @@ async fn test_cli_gui_parity_validate_archive() -> Result<()> {
 
     // Validate using CLI
     let cli_validate_output = Command::new("cargo")
-        .args(&["run", "--bin", "rusty", "--", "validate", archive_path.to_str().unwrap()])
+        .args(&["run", "--bin", "rolypoly", "--", "validate", archive_path.to_str().unwrap()])
         .output()?;
 
     let cli_success = cli_validate_output.status.success();
@@ -179,7 +179,7 @@ async fn test_cli_gui_parity_hash_calculation() -> Result<()> {
 
     // Calculate hash using CLI
     let cli_hash_output = Command::new("cargo")
-        .args(&["run", "--bin", "rusty", "--", "hash", test_file.to_str().unwrap()])
+        .args(&["run", "--bin", "rolypoly", "--", "hash", test_file.to_str().unwrap()])
         .output()?;
 
     assert!(cli_hash_output.status.success(), "CLI hash calculation failed");
@@ -218,7 +218,7 @@ async fn test_cli_gui_parity_large_file_handling() -> Result<()> {
         .args(&[
             "run",
             "--bin",
-            "rusty",
+            "rolypoly",
             "--",
             "create",
             cli_archive.to_str().unwrap(),
@@ -267,7 +267,7 @@ async fn test_cli_gui_parity_multiple_files() -> Result<()> {
 
     // Create archive using CLI
     let cli_archive = temp_dir.path().join("cli_multi.zip");
-    let mut cli_args = vec!["run", "--bin", "rusty", "--", "create", cli_archive.to_str().unwrap()];
+    let mut cli_args = vec!["run", "--bin", "rolypoly", "--", "create", cli_archive.to_str().unwrap()];
     for file in &files {
         cli_args.push(file.to_str().unwrap());
     }
@@ -309,7 +309,7 @@ async fn test_cli_gui_parity_error_handling() -> Result<()> {
         .args(&[
             "run",
             "--bin",
-            "rusty",
+            "rolypoly",
             "--",
             "create",
             output_archive.to_str().unwrap(),
@@ -320,7 +320,7 @@ async fn test_cli_gui_parity_error_handling() -> Result<()> {
     let cli_failed = !cli_output.status.success();
 
     // Test GUI error handling
-    let archive_manager = rusty::archive::ArchiveManager::new();
+    let archive_manager = rolypoly::archive::ArchiveManager::new();
     let gui_result = archive_manager.create_archive(&output_archive, &[&nonexistent_file]);
     let gui_failed = gui_result.is_err();
 
@@ -344,7 +344,7 @@ async fn test_performance_parity() -> Result<()> {
         .args(&[
             "run",
             "--bin",
-            "rusty",
+            "rolypoly",
             "--",
             "create",
             cli_archive.to_str().unwrap(),
@@ -358,7 +358,7 @@ async fn test_performance_parity() -> Result<()> {
     // Measure GUI performance
     let gui_start = std::time::Instant::now();
     let gui_archive = temp_dir.path().join("gui_perf.zip");
-    let archive_manager = rusty::archive::ArchiveManager::new();
+    let archive_manager = rolypoly::archive::ArchiveManager::new();
     archive_manager.create_archive(&gui_archive, &[&test_file])?;
     let gui_duration = gui_start.elapsed();
 

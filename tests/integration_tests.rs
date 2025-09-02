@@ -5,8 +5,12 @@ use std::process::Command;
 use tempfile::TempDir;
 
 /// Helper function to run rusty command and capture output
-fn run_rusty_command(args: &[&str]) -> Result<std::process::Output> {
-    let output = Command::new("./target/release/rusty").args(args).output()?;
+fn run_rp_command(args: &[&str]) -> Result<std::process::Output> {
+    // Ensure release binary exists
+    if !Path::new("./target/release/rolypoly").exists() {
+        Command::new("cargo").args(["build", "--release"]).status()?;
+    }
+    let output = Command::new("./target/release/rolypoly").args(args).output()?;
     Ok(output)
 }
 
@@ -34,7 +38,7 @@ fn create_test_files(dir: &Path) -> Result<()> {
 #[test]
 fn test_end_to_end_archive_workflow() -> Result<()> {
     // Ensure release binary exists
-    if !Path::new("./target/release/rusty").exists() {
+    if !Path::new("./target/release/rolypoly").exists() {
         Command::new("cargo").args(&["build", "--release"]).status()?;
     }
 
@@ -48,7 +52,7 @@ fn test_end_to_end_archive_workflow() -> Result<()> {
     let extract_dir = work_dir.join("extracted");
 
     // Step 1: Create archive
-    let output = run_rusty_command(&[
+    let output = run_rp_command(&[
         "create",
         archive_path.to_str().unwrap(),
         work_dir.join("small.txt").to_str().unwrap(),
@@ -67,7 +71,7 @@ fn test_end_to_end_archive_workflow() -> Result<()> {
     assert!(archive_path.exists(), "Archive file was not created");
 
     // Step 2: List archive contents
-    let output = run_rusty_command(&["list", archive_path.to_str().unwrap()])?;
+    let output = run_rp_command(&["list", archive_path.to_str().unwrap()])?;
 
     assert!(
         output.status.success(),
@@ -84,7 +88,7 @@ fn test_end_to_end_archive_workflow() -> Result<()> {
     assert!(list_output.contains("binary.dat"));
 
     // Step 3: Validate archive integrity
-    let output = run_rusty_command(&["validate", archive_path.to_str().unwrap()])?;
+    let output = run_rp_command(&["validate", archive_path.to_str().unwrap()])?;
 
     assert!(
         output.status.success(),
@@ -95,7 +99,7 @@ fn test_end_to_end_archive_workflow() -> Result<()> {
     assert!(validation_output.contains("Archive is valid"));
 
     // Step 4: Get archive statistics
-    let output = run_rusty_command(&["stats", archive_path.to_str().unwrap()])?;
+    let output = run_rp_command(&["stats", archive_path.to_str().unwrap()])?;
 
     assert!(
         output.status.success(),
@@ -110,7 +114,7 @@ fn test_end_to_end_archive_workflow() -> Result<()> {
 
     // Step 5: Extract archive
     fs::create_dir(&extract_dir)?;
-    let output = run_rusty_command(&[
+    let output = run_rp_command(&[
         "extract",
         archive_path.to_str().unwrap(),
         "-o",
@@ -146,7 +150,7 @@ fn test_end_to_end_archive_workflow() -> Result<()> {
     assert_eq!(fs::read(extract_dir.join("binary.dat"))?, [0u8, 1, 2, 255, 128, 64]);
 
     // Step 8: Test hash calculation
-    let output = run_rusty_command(&["hash", work_dir.join("small.txt").to_str().unwrap()])?;
+    let output = run_rp_command(&["hash", work_dir.join("small.txt").to_str().unwrap()])?;
 
     assert!(
         output.status.success(),
@@ -163,7 +167,7 @@ fn test_end_to_end_archive_workflow() -> Result<()> {
 #[test]
 fn test_error_handling_scenarios() -> Result<()> {
     // Ensure release binary exists
-    if !Path::new("./target/release/rusty").exists() {
+    if !Path::new("./target/release/rolypoly").exists() {
         Command::new("cargo").args(&["build", "--release"]).status()?;
     }
 
@@ -171,7 +175,7 @@ fn test_error_handling_scenarios() -> Result<()> {
     let work_dir = temp_dir.path();
 
     // Test 1: Create archive with non-existent file
-    let output = run_rusty_command(&[
+    let output = run_rp_command(&[
         "create",
         work_dir.join("test.zip").to_str().unwrap(),
         work_dir.join("nonexistent.txt").to_str().unwrap(),
@@ -182,29 +186,29 @@ fn test_error_handling_scenarios() -> Result<()> {
     assert!(error_output.contains("does not exist") || error_output.contains("not found"));
 
     // Test 2: Create archive with no files
-    let output = run_rusty_command(&["create", work_dir.join("test.zip").to_str().unwrap()])?;
+    let output = run_rp_command(&["create", work_dir.join("test.zip").to_str().unwrap()])?;
 
     assert!(!output.status.success(), "Should fail with no files");
 
     // Test 3: Extract non-existent archive
     let output =
-        run_rusty_command(&["extract", work_dir.join("nonexistent.zip").to_str().unwrap()])?;
+        run_rp_command(&["extract", work_dir.join("nonexistent.zip").to_str().unwrap()])?;
 
     assert!(!output.status.success(), "Should fail with non-existent archive");
 
     // Test 4: List non-existent archive
-    let output = run_rusty_command(&["list", work_dir.join("nonexistent.zip").to_str().unwrap()])?;
+    let output = run_rp_command(&["list", work_dir.join("nonexistent.zip").to_str().unwrap()])?;
 
     assert!(!output.status.success(), "Should fail with non-existent archive");
 
     // Test 5: Validate non-existent archive
     let output =
-        run_rusty_command(&["validate", work_dir.join("nonexistent.zip").to_str().unwrap()])?;
+        run_rp_command(&["validate", work_dir.join("nonexistent.zip").to_str().unwrap()])?;
 
     assert!(!output.status.success(), "Should fail with non-existent archive");
 
     // Test 6: Hash non-existent file
-    let output = run_rusty_command(&["hash", work_dir.join("nonexistent.txt").to_str().unwrap()])?;
+    let output = run_rp_command(&["hash", work_dir.join("nonexistent.txt").to_str().unwrap()])?;
 
     assert!(!output.status.success(), "Should fail with non-existent file");
 
@@ -214,7 +218,7 @@ fn test_error_handling_scenarios() -> Result<()> {
 #[test]
 fn test_large_file_handling() -> Result<()> {
     // Ensure release binary exists
-    if !Path::new("./target/release/rusty").exists() {
+    if !Path::new("./target/release/rolypoly").exists() {
         Command::new("cargo").args(&["build", "--release"]).status()?;
     }
 
@@ -230,7 +234,7 @@ fn test_large_file_handling() -> Result<()> {
     let extract_dir = work_dir.join("extracted");
 
     // Create archive with large file
-    let output = run_rusty_command(&[
+    let output = run_rp_command(&[
         "create",
         archive_path.to_str().unwrap(),
         large_file.to_str().unwrap(),
@@ -244,7 +248,7 @@ fn test_large_file_handling() -> Result<()> {
     assert!(archive_path.exists());
 
     // Validate the archive
-    let output = run_rusty_command(&["validate", archive_path.to_str().unwrap()])?;
+    let output = run_rp_command(&["validate", archive_path.to_str().unwrap()])?;
 
     assert!(
         output.status.success(),
@@ -254,7 +258,7 @@ fn test_large_file_handling() -> Result<()> {
 
     // Extract and verify
     fs::create_dir(&extract_dir)?;
-    let output = run_rusty_command(&[
+    let output = run_rp_command(&[
         "extract",
         archive_path.to_str().unwrap(),
         "-o",
@@ -276,7 +280,7 @@ fn test_large_file_handling() -> Result<()> {
 #[test]
 fn test_special_characters_and_unicode() -> Result<()> {
     // Ensure release binary exists
-    if !Path::new("./target/release/rusty").exists() {
+    if !Path::new("./target/release/rolypoly").exists() {
         Command::new("cargo").args(&["build", "--release"]).status()?;
     }
 
@@ -307,7 +311,7 @@ fn test_special_characters_and_unicode() -> Result<()> {
         args.push(path);
     }
 
-    let output = run_rusty_command(&args)?;
+    let output = run_rp_command(&args)?;
     assert!(
         output.status.success(),
         "Unicode file archiving failed: {}",
@@ -316,7 +320,7 @@ fn test_special_characters_and_unicode() -> Result<()> {
 
     // Extract and verify
     fs::create_dir(&extract_dir)?;
-    let output = run_rusty_command(&[
+    let output = run_rp_command(&[
         "extract",
         archive_path.to_str().unwrap(),
         "-o",
@@ -345,7 +349,7 @@ fn test_special_characters_and_unicode() -> Result<()> {
 #[test]
 fn test_compression_effectiveness() -> Result<()> {
     // Ensure release binary exists
-    if !Path::new("./target/release/rusty").exists() {
+    if !Path::new("./target/release/rolypoly").exists() {
         Command::new("cargo").args(&["build", "--release"]).status()?;
     }
 
@@ -365,7 +369,7 @@ fn test_compression_effectiveness() -> Result<()> {
     let archive_path = work_dir.join("compression_test.zip");
 
     // Create archive
-    let output = run_rusty_command(&[
+    let output = run_rp_command(&[
         "create",
         archive_path.to_str().unwrap(),
         compressible_file.to_str().unwrap(),
@@ -379,7 +383,7 @@ fn test_compression_effectiveness() -> Result<()> {
     );
 
     // Get statistics
-    let output = run_rusty_command(&["stats", archive_path.to_str().unwrap()])?;
+    let output = run_rp_command(&["stats", archive_path.to_str().unwrap()])?;
 
     assert!(
         output.status.success(),
@@ -400,7 +404,7 @@ fn test_compression_effectiveness() -> Result<()> {
 #[test]
 fn test_concurrent_operations() -> Result<()> {
     // Ensure release binary exists
-    if !Path::new("./target/release/rusty").exists() {
+    if !Path::new("./target/release/rolypoly").exists() {
         Command::new("cargo").args(&["build", "--release"]).status()?;
     }
 
@@ -419,7 +423,7 @@ fn test_concurrent_operations() -> Result<()> {
         let work_dir = work_dir.to_path_buf();
         let handle = std::thread::spawn(move || -> Result<()> {
             let archive_path = work_dir.join(format!("concurrent_{}.zip", i));
-            let output = run_rusty_command(&[
+            let output = run_rp_command(&[
                 "create",
                 archive_path.to_str().unwrap(),
                 work_dir.join("file_0.txt").to_str().unwrap(),
@@ -430,7 +434,7 @@ fn test_concurrent_operations() -> Result<()> {
             assert!(archive_path.exists());
 
             // Validate the archive
-            let output = run_rusty_command(&["validate", archive_path.to_str().unwrap()])?;
+            let output = run_rp_command(&["validate", archive_path.to_str().unwrap()])?;
 
             assert!(output.status.success(), "Concurrent validation {} failed", i);
             Ok(())
@@ -449,12 +453,12 @@ fn test_concurrent_operations() -> Result<()> {
 #[test]
 fn test_cli_help_and_version() -> Result<()> {
     // Ensure release binary exists
-    if !Path::new("./target/release/rusty").exists() {
+    if !Path::new("./target/release/rolypoly").exists() {
         Command::new("cargo").args(&["build", "--release"]).status()?;
     }
 
     // Test --help
-    let output = run_rusty_command(&["--help"])?;
+    let output = run_rp_command(&["--help"])?;
     assert!(output.status.success(), "Help command failed");
     let help_output = String::from_utf8_lossy(&output.stdout);
     assert!(help_output.contains("Usage:"));
@@ -467,13 +471,13 @@ fn test_cli_help_and_version() -> Result<()> {
     assert!(help_output.contains("hash"));
 
     // Test --version
-    let output = run_rusty_command(&["--version"])?;
+    let output = run_rp_command(&["--version"])?;
     assert!(output.status.success(), "Version command failed");
     let version_output = String::from_utf8_lossy(&output.stdout);
     assert!(version_output.contains("0.1.0"));
 
     // Test help for specific commands
-    let output = run_rusty_command(&["create", "--help"])?;
+    let output = run_rp_command(&["create", "--help"])?;
     assert!(output.status.success(), "Create help failed");
     let create_help = String::from_utf8_lossy(&output.stdout);
     assert!(create_help.contains("Create a new ZIP archive"));

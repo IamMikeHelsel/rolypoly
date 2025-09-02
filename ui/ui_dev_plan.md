@@ -1,8 +1,8 @@
-# Rusty Compressor UI Development Plan
+# RolyPoly Compressor UI Development Plan
 
 ## 1. Project Goal
 
-To create a modern, intuitive user interface for the Rusty compression utility based on the provided screenshots. The UI will be built using web technologies (HTML, CSS, JavaScript) and integrated into the main application using Tauri.
+To create a modern, intuitive user interface for the RolyPoly compression utility based on the provided screenshots. The UI will be built using web technologies (HTML, CSS, JavaScript) and integrated into the main application using Tauri or Flutter.
 
 ## 2. Key Views & Components
 

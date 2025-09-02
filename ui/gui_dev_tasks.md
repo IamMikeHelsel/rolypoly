@@ -15,7 +15,7 @@
 - [x] **Fix button spacing and sizing** - Toolbar buttons properly spaced with correct sizes
 - [ ] **Implement hover effects** - Buttons should have hover states
 - [ ] **Fix file table alternating row colors** - Should match the mockup
-- [ ] **Add proper window title bar** - Should show "Rusty" clearly
+- [ ] **Add proper window title bar** - Should show "RolyPoly" clearly
 - [ ] **Fix donut chart visualization** - Should look more like the mockup
 
 ### Functional Issues

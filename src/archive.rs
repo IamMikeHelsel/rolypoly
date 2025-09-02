@@ -1,5 +1,6 @@
 use anyhow::Result;
 use indicatif::{ProgressBar, ProgressStyle};
+use std::time::Instant;
 use sha2::{Digest, Sha256};
 use std::fs::File;
 use std::io::{BufReader, Read};
@@ -26,13 +27,16 @@ impl ArchiveManager {
         let file = File::open(archive_path.as_ref())?;
         let mut archive = ZipArchive::new(BufReader::new(file))?;
 
-        println!("Validating archive: {}", archive_path.as_ref().display());
+        println!("→ Validating: {}", archive_path.as_ref().display());
+        let start = Instant::now();
         let pb = ProgressBar::new(archive.len() as u64);
         pb.set_style(
             ProgressStyle::default_bar()
-                .template("[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
+                .template(
+                    "{spinner:.green} [{elapsed_precise}] {wide_bar:.cyan/blue} {pos:>5}/{len:<5} {percent:>3}% {eta_precise} | {msg}"
+                )
                 .unwrap()
-                .progress_chars("##-"),
+                .progress_chars("█· "),
         );
 
         for i in 0..archive.len() {
@@ -45,7 +49,11 @@ impl ArchiveManager {
             pb.inc(1);
         }
 
-        pb.finish_with_message("Archive validation completed");
+        let elapsed = start.elapsed();
+        pb.finish_with_message(format!(
+            "✓ Validation completed in {:.2?}",
+            elapsed
+        ));
         Ok(true)
     }
 
@@ -131,13 +139,16 @@ impl ArchiveManager {
             }
         }
 
-        println!("Creating archive: {}", archive_path.as_ref().display());
+        println!("→ Creating: {}", archive_path.as_ref().display());
+        let start = Instant::now();
         let pb = ProgressBar::new(total_files as u64);
         pb.set_style(
             ProgressStyle::default_bar()
-                .template("[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
+                .template(
+                    "{spinner:.green} [{elapsed_precise}] {wide_bar:.cyan/blue} {pos:>5}/{len:<5} {percent:>3}% {eta_precise} | {msg}"
+                )
                 .unwrap()
-                .progress_chars("##-"),
+                .progress_chars("█· "),
         );
 
         for file_path in files {
@@ -151,7 +162,11 @@ impl ArchiveManager {
             }
         }
 
-        pb.finish_with_message("Archive created successfully");
+        let elapsed = start.elapsed();
+        pb.finish_with_message(format!(
+            "✓ Created {} files in {:.2?}",
+            total_files, elapsed
+        ));
         zip.finish()?;
         Ok(())
     }
@@ -162,16 +177,19 @@ impl ArchiveManager {
         let mut archive = ZipArchive::new(BufReader::new(file))?;
 
         println!(
-            "Extracting archive: {} to {}",
+            "→ Extracting: {} → {}",
             archive_path.as_ref().display(),
             output_dir.as_ref().display()
         );
+        let start = Instant::now();
         let pb = ProgressBar::new(archive.len() as u64);
         pb.set_style(
             ProgressStyle::default_bar()
-                .template("[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
+                .template(
+                    "{spinner:.green} [{elapsed_precise}] {wide_bar:.cyan/blue} {pos:>5}/{len:<5} {percent:>3}% {eta_precise} | {msg}"
+                )
                 .unwrap()
-                .progress_chars("##-"),
+                .progress_chars("█· "),
         );
 
         for i in 0..archive.len() {
@@ -191,7 +209,8 @@ impl ArchiveManager {
             pb.inc(1);
         }
 
-        pb.finish_with_message("Extraction completed");
+        let elapsed = start.elapsed();
+        pb.finish_with_message(format!("✓ Extracted in {:.2?}", elapsed));
         Ok(())
     }
 

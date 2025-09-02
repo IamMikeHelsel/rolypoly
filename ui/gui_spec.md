@@ -1,4 +1,4 @@
-# Rusty GUI — Operational Specification (v0.3 draft)
+# RolyPoly GUI — Operational Specification (v0.3 draft)
 
 ---
 
@@ -29,7 +29,7 @@ Provide a modern, dark-themed, WinZip-style client for creating and extracting c
 
 | Ref | Element                           | Function                                                                    |
 | --- | --------------------------------- | --------------------------------------------------------------------------- |
-| A   | **Title-bar** (“Rusty”)           | Left-click = About dialog.                                                  |
+| A   | **Title-bar** (“RolyPoly”)        | Left-click = About dialog.                                                  |
 | B1  | **Add (+ icon)**                  | Opens OS file picker, appends to file list.                                 |
 | B2  | **Open (folder-arrow icon)**      | Opens archive, replaces view; Ctrl+O shortcut.                              |
 | B3  | **Copy Path (clipboard icon)**    | Copies archive or selected file paths to clipboard.                         |
@@ -103,7 +103,7 @@ Error, progress, or password dialogs surface as modal sheets with blur backgroun
 1. **Archive Formats**: beyond ZIP & TAR.GZ, should we ship 7z, RAR (requires non-OSS libs), zstd-tar, etc.?
 2. **Password UX**: enforce minimum length / strength rules?
 3. **Split Archives**: support multi-part volumes?
-4. **CLI Integration**: bundle a `rusty` CLI or keep GUI-only?
+4. **CLI Integration**: bundle a `rolypoly` CLI or keep GUI-only?
 5. **Localization Targets**: English only at launch or include others?
 6. **Telemetry**: any opt-in crash / usage reporting?
 
