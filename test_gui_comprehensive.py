@@ -37,7 +37,7 @@ class TestResult:
         self.details = details
         self.timestamp = time.time()
 
-class RustyGUITester:
+class RolyPolyGUITester:
     """Main test runner for Rusty GUI components"""
     
     def __init__(self):
@@ -111,7 +111,7 @@ class RustyGUITester:
         )
         
         # Test binary compilation
-        returncode, stdout, stderr = self.run_command(["cargo", "build", "--bin", "rusty"])
+        returncode, stdout, stderr = self.run_command(["cargo", "build", "--bin", "rolypoly"])
         self.add_result(
             "Binary Compilation",
             returncode == 0,
@@ -345,7 +345,7 @@ class RustyGUITester:
             archive_path = temp_path / "test.zip"
             
             # Test CLI help
-            returncode, stdout, stderr = self.run_command(["cargo", "run", "--bin", "rusty", "--", "--help"])
+            returncode, stdout, stderr = self.run_command(["cargo", "run", "--bin", "rolypoly", "--", "--help"])
             self.add_result(
                 "CLI Help",
                 returncode == 0 and "Usage:" in stdout,
@@ -355,7 +355,7 @@ class RustyGUITester:
             
             # Test CLI create archive
             returncode, stdout, stderr = self.run_command([
-                "cargo", "run", "--bin", "rusty", "--", "create", 
+                "cargo", "run", "--bin", "rolypoly", "--", "create", 
                 str(archive_path), str(test_file1), str(test_file2)
             ])
             self.add_result(
@@ -368,7 +368,7 @@ class RustyGUITester:
             # Test CLI list archive
             if archive_path.exists():
                 returncode, stdout, stderr = self.run_command([
-                    "cargo", "run", "--bin", "rusty", "--", "list", str(archive_path)
+                    "cargo", "run", "--bin", "rolypoly", "--", "list", str(archive_path)
                 ])
                 self.add_result(
                     "CLI List Archive",
@@ -379,7 +379,7 @@ class RustyGUITester:
                 
                 # Test CLI validate archive
                 returncode, stdout, stderr = self.run_command([
-                    "cargo", "run", "--bin", "rusty", "--", "validate", str(archive_path)
+                    "cargo", "run", "--bin", "rolypoly", "--", "validate", str(archive_path)
                 ])
                 self.add_result(
                     "CLI Validate Archive",
@@ -477,7 +477,7 @@ class RustyGUITester:
 
 def main():
     """Main entry point"""
-    tester = RustyGUITester()
+    tester = RolyPolyGUITester()
     success = tester.run_all_tests()
     
     if success:

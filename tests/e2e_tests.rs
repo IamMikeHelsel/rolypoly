@@ -97,7 +97,7 @@ async fn test_cli_list_archive() {
         .args(&[
             "run",
             "--bin",
-            "rusty",
+            "rolypoly",
             "--",
             "create",
             archive_path.to_str().unwrap(),
@@ -314,7 +314,7 @@ async fn test_error_handling_missing_file() {
         .args(&[
             "run",
             "--bin",
-            "rusty",
+            "rolypoly",
             "--",
             "create",
             archive_path.to_str().unwrap(),

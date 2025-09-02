@@ -1,4 +1,4 @@
-# Parallelization Analysis for Rusty ZIP Archiver
+# Parallelization Analysis for RolyPoly ZIP Archiver
 
 ## Current State: Single-Threaded Implementation
 

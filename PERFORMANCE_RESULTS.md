@@ -24,14 +24,14 @@
 
 | Tool | Time (ms) | Throughput (MB/s) | Compression Ratio |
 |------|-----------|-------------------|-------------------|
-| **Rusty** | 165 | **33.84** | **99.5%** |
+| **RolyPoly** | 165 | **33.84** | **99.5%** |
 | System zip | 28 | 199.43 | 99.4% |
 
 ### Archive Extraction  
 
 | Tool | Time (ms) | Throughput (MB/s) |
 |------|-----------|-------------------|
-| **Rusty** | 20 | **279.20** |
+| **RolyPoly** | 20 | **279.20** |
 | System unzip | 39 | 143.18 |
 
 ## Key Findings
@@ -39,7 +39,7 @@
 ### ✅ **Strengths**
 
 1. **Excellent Extraction Performance**:
-   - Rusty extracts at **279 MB/s** vs system unzip at 143 MB/s
+  - RolyPoly extracts at **279 MB/s** vs system unzip at 143 MB/s
    - **95% faster** extraction than system tools
 
 2. **Great Compression Efficiency**:
@@ -53,9 +53,9 @@
 ### ⚠️ **Areas for Improvement**
 
 1. **Archive Creation Speed**:
-   - Rusty: 33.84 MB/s
+  - RolyPoly: 33.84 MB/s
    - System zip: 199.43 MB/s  
-   - Rusty is **83% slower** for creation
+  - RolyPoly is **83% slower** for creation
 
 ## Performance Analysis
 

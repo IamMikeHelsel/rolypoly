@@ -89,7 +89,7 @@ fn create_test_files(dir: &Path) -> Result<f64, Box<dyn std::error::Error>> {
     Ok(total_size as f64 / 1024.0 / 1024.0) // Convert to MB
 }
 
-fn benchmark_rusty_create(
+fn benchmark_rolypoly_create(
     test_dir: &Path,
     archive_path: &Path,
 ) -> Result<BenchmarkResult, Box<dyn std::error::Error>> {
@@ -135,7 +135,7 @@ fn benchmark_rusty_create(
     .with_compression_ratio(compression_ratio))
 }
 
-fn benchmark_rusty_extract(
+fn benchmark_rolypoly_extract(
     archive_path: &Path,
     extract_dir: &Path,
     file_count: usize,
@@ -247,22 +247,22 @@ fn run_benchmarks() -> Result<Vec<BenchmarkResult>, Box<dyn std::error::Error>> 
 
     // Benchmark RolyPoly
     println!("Benchmarking RolyPoly...");
-    let rusty_archive = temp_dir.path().join("rusty_test.zip");
-    let rusty_create_result = benchmark_rusty_create(&test_dir, &rusty_archive)?;
+    let rolypoly_archive = temp_dir.path().join("rolypoly_test.zip");
+    let rolypoly_create_result = benchmark_rolypoly_create(&test_dir, &rolypoly_archive)?;
     println!(
         "  Create: {:.0}ms ({:.2} MB/s)",
-        rusty_create_result.time_ms, rusty_create_result.throughput_mbps
+        rolypoly_create_result.time_ms, rolypoly_create_result.throughput_mbps
     );
-    results.push(rusty_create_result);
+    results.push(rolypoly_create_result);
 
-    let rusty_extract_dir = temp_dir.path().join("rusty_extract");
-    let rusty_extract_result =
-        benchmark_rusty_extract(&rusty_archive, &rusty_extract_dir, file_count, total_size_mb)?;
+    let rolypoly_extract_dir = temp_dir.path().join("rolypoly_extract");
+    let rolypoly_extract_result =
+        benchmark_rolypoly_extract(&rolypoly_archive, &rolypoly_extract_dir, file_count, total_size_mb)?;
     println!(
         "  Extract: {:.0}ms ({:.2} MB/s)",
-        rusty_extract_result.time_ms, rusty_extract_result.throughput_mbps
+        rolypoly_extract_result.time_ms, rolypoly_extract_result.throughput_mbps
     );
-    results.push(rusty_extract_result);
+    results.push(rolypoly_extract_result);
 
     // Benchmark system zip if available
     if Command::new("zip").arg("--version").output().is_ok() {
@@ -346,12 +346,12 @@ fn performance_benchmark() {
             print_summary(&results);
 
             // Assert some basic performance expectations
-            let rusty_create =
+            let rolypoly_create =
                 results.iter().find(|r| r.tool == "rolypoly" && r.operation == "create");
-            let rusty_extract =
+            let rolypoly_extract =
                 results.iter().find(|r| r.tool == "rolypoly" && r.operation == "extract");
 
-            if let Some(create_result) = rusty_create {
+            if let Some(create_result) = rolypoly_create {
                 assert!(
                     create_result.throughput_mbps > 1.0,
                     "Create throughput should be > 1 MB/s"
@@ -361,7 +361,7 @@ fn performance_benchmark() {
                 }
             }
 
-            if let Some(extract_result) = rusty_extract {
+            if let Some(extract_result) = rolypoly_extract {
                 assert!(
                     extract_result.throughput_mbps > 5.0,
                     "Extract throughput should be > 5 MB/s"

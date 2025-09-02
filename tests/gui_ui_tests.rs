@@ -80,7 +80,7 @@ async fn test_gui_with_large_archive() {
     // Test GUI with large archive
     let mut child = TokioCommand::new("cargo")
         .args(&["run", "--features", "gui", "--bin", "rolypoly-gui"]) 
-        .env("RUSTY_TEST_ARCHIVE", archive_path.to_str().unwrap())
+        .env("ROLYPOLY_TEST_ARCHIVE", archive_path.to_str().unwrap())
         .kill_on_drop(true)
         .spawn()
         .expect("Failed to start GUI");
@@ -123,7 +123,7 @@ async fn test_gui_stress_test() {
     // Test GUI with many files
     let mut child = TokioCommand::new("cargo")
         .args(&["run", "--features", "gui", "--bin", "rolypoly-gui"]) 
-        .env("RUSTY_TEST_ARCHIVE", archive_path.to_str().unwrap())
+        .env("ROLYPOLY_TEST_ARCHIVE", archive_path.to_str().unwrap())
         .kill_on_drop(true)
         .spawn()
         .expect("Failed to start GUI");
@@ -148,7 +148,7 @@ async fn test_gui_error_handling() {
     // Test GUI with invalid archive
     let mut child = TokioCommand::new("cargo")
         .args(&["run", "--features", "gui", "--bin", "rolypoly-gui"]) 
-        .env("RUSTY_TEST_ARCHIVE", invalid_archive.to_str().unwrap())
+        .env("ROLYPOLY_TEST_ARCHIVE", invalid_archive.to_str().unwrap())
         .kill_on_drop(true)
         .spawn()
         .expect("Failed to start GUI");
@@ -207,7 +207,7 @@ async fn test_gui_theme_switching() {
     // Test that GUI can handle theme changes
     let mut child = TokioCommand::new("cargo")
         .args(&["run", "--features", "gui", "--bin", "rolypoly-gui"]) 
-        .env("RUSTY_THEME", "dark")
+        .env("ROLYPOLY_THEME", "dark")
         .kill_on_drop(true)
         .spawn()
         .expect("Failed to start GUI with dark theme");
@@ -228,8 +228,8 @@ async fn test_gui_file_operations() {
 
     // Test GUI file operations
     let mut child = TokioCommand::new("cargo")
-        .args(&["run", "--features", "gui", "--bin", "rusty-gui"]) 
-        .env("RUSTY_TEST_FILE", test_file.to_str().unwrap())
+        .args(&["run", "--features", "gui", "--bin", "rolypoly-gui"]) 
+        .env("ROLYPOLY_TEST_FILE", test_file.to_str().unwrap())
         .kill_on_drop(true)
         .spawn()
         .expect("Failed to start GUI");
@@ -245,7 +245,7 @@ async fn test_gui_file_operations() {
 #[tokio::test]
 async fn test_gui_keyboard_shortcuts() {
     let mut child = TokioCommand::new("cargo")
-        .args(&["run", "--features", "gui", "--bin", "rusty-gui"]) 
+        .args(&["run", "--features", "gui", "--bin", "rolypoly-gui"]) 
         .kill_on_drop(true)
         .spawn()
         .expect("Failed to start GUI");
