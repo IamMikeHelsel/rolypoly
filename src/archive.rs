@@ -190,17 +190,19 @@ impl ArchiveManager {
             None
         };
 
+        let mut processed: u64 = 0;
         for file_path in files {
             let path = file_path.as_ref();
             if path.is_file() {
                 if let Some(pb) = &pb {
                     pb.set_message(format!("Adding: {}", path.display()));
                 }
+                processed += 1;
                 if mode.json {
-                    let current = pb.as_ref().map(|p| p.position() + 1).unwrap_or(0);
+                    let pct = if total > 0 { (processed as f64) / (total as f64) } else { 0.0 };
                     crate::progress::print_json(&serde_json::json!({
                         "event":"progress","op":"create","file": path.display().to_string(),
-                        "current": current, "total": total
+                        "current": processed, "total": total, "pct": pct
                     }));
                 }
                 self.add_file_to_zip(&mut zip, path, &options)?;
@@ -208,7 +210,7 @@ impl ArchiveManager {
                     pb.inc(1);
                 }
             } else if path.is_dir() {
-                self.add_dir_to_zip_with_progress(&mut zip, path, &options, &pb)?;
+                self.add_dir_to_zip_with_progress(&mut zip, path, &options, &pb, mode.json, total, &mut processed)?;
             }
         }
 
@@ -333,6 +335,9 @@ impl ArchiveManager {
         dir_path: &Path,
         options: &SimpleFileOptions,
         pb: &Option<ProgressBar>,
+        json: bool,
+        total: u64,
+        processed: &mut u64,
     ) -> Result<()> {
         let walkdir = WalkDir::new(dir_path);
         let it = walkdir.into_iter();
@@ -361,6 +366,14 @@ impl ArchiveManager {
                 std::io::copy(&mut file, zip)?;
                 if let Some(pb) = pb {
                     pb.inc(1);
+                }
+                *processed += 1;
+                if json {
+                    let pct = if total > 0 { (*processed as f64) / (total as f64) } else { 0.0 };
+                    crate::progress::print_json(&serde_json::json!({
+                        "event":"progress","op":"create","file": path.display().to_string(),
+                        "current": *processed, "total": total, "pct": pct
+                    }));
                 }
             } else if path.is_dir() && !relative_path.is_empty() {
                 zip.add_directory(format!("{archive_path}/"), *options)?;

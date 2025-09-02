@@ -1,4 +1,5 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'features/compress.dart';
 import 'features/extract.dart';
@@ -33,9 +34,23 @@ class _HomeState extends State<_Home> {
   final _titles = const ['Compress', 'Extract', 'Inspect', 'Validate & Stats'];
   @override
   Widget build(BuildContext context) {
+    final banner = kIsWeb
+        ? MaterialBanner(
+            content: const Text('Web preview: operations require a backend or will be limited. Use desktop app for full functionality.'),
+            actions: [
+              TextButton(onPressed: () => ScaffoldMessenger.of(context).hideCurrentMaterialBanner(), child: const Text('Dismiss'))
+            ],
+          )
+        : null;
+
     return Scaffold(
       appBar: AppBar(title: Text('RolyPoly – ${_titles[_index]}')),
-      body: _pages[_index],
+      body: Column(
+        children: [
+          if (banner != null) banner,
+          Expanded(child: _pages[_index]),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         destinations: const [
