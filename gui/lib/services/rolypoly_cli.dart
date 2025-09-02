@@ -17,6 +17,14 @@ class RolyPolyCli {
     return Process.run(binary, args);
   }
 
+  Stream<Map<String, dynamic>> streamExtract(String archive, String outDir) async* {
+    final args = ['extract', archive, '-o', outDir, '--json', '--progress'];
+    final proc = await Process.start(binary, args);
+    await for (final line in proc.stdout.transform(utf8.decoder).transform(const LineSplitter())) {
+      try { yield jsonDecode(line) as Map<String, dynamic>; } catch (_) {}
+    }
+  }
+
   Future<ProcessResult> list(String archive, {bool json = false}) {
     final args = ['list', archive, if (json) '--json'];
     return Process.run(binary, args);
@@ -27,9 +35,33 @@ class RolyPolyCli {
     return Process.run(binary, args);
   }
 
+  Stream<Map<String, dynamic>> streamValidate(String archive) async* {
+    final args = ['validate', archive, '--json', '--progress'];
+    final proc = await Process.start(binary, args);
+    await for (final line in proc.stdout.transform(utf8.decoder).transform(const LineSplitter())) {
+      try { yield jsonDecode(line) as Map<String, dynamic>; } catch (_) {}
+    }
+  }
+
   Future<ProcessResult> stats(String archive, {bool json = false}) {
     final args = ['stats', archive, if (json) '--json'];
     return Process.run(binary, args);
+  }
+
+  Future<Map<String, dynamic>?> listJson(String archive) async {
+    final r = await list(archive, json: true);
+    if (r.exitCode == 0) {
+      try { return jsonDecode(r.stdout as String) as Map<String, dynamic>; } catch (_) {}
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> statsJson(String archive) async {
+    final r = await stats(archive, json: true);
+    if (r.exitCode == 0) {
+      try { return jsonDecode(r.stdout as String) as Map<String, dynamic>; } catch (_) {}
+    }
+    return null;
   }
 
   Future<ProcessResult> hash(String file, {bool json = false}) {
@@ -50,4 +82,3 @@ class RolyPolyCli {
     }
   }
 }
-

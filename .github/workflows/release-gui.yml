@@ -92,7 +92,7 @@ jobs:
         if: steps.changes.outputs.changed == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: rolypoly-gui-${{ matrix.os }}
+          name: rolypoly-gui-${{ matrix.os }}-build${{ github.run_number }}
           path: |
             gui/build/**/release/*
 

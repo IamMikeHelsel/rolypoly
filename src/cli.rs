@@ -8,7 +8,7 @@ use std::path::PathBuf;
 #[derive(Parser)]
 #[command(name = "rolypoly")]
 #[command(about = "A modern ZIP archiver written in Rust")]
-#[command(version = "0.1.0")]
+#[command(version = crate::build_info::SHORT_VERSION, long_version = crate::build_info::LONG_VERSION)]
 pub struct Cli {
     /// Emit machine-readable JSON to stdout
     #[arg(long, global = true, action = ArgAction::SetTrue)]

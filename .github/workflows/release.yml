@@ -19,15 +19,15 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             binary_name: rolypoly
-            asset_name: rolypoly-linux-x86_64
+            asset_name: rolypoly-linux-x86_64-build${{ github.run_number }}
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             binary_name: rolypoly.exe
-            asset_name: rolypoly-windows-x86_64.exe
+            asset_name: rolypoly-windows-x86_64-build${{ github.run_number }}.exe
           - os: macOS-latest
             target: x86_64-apple-darwin
             binary_name: rolypoly
-            asset_name: rolypoly-macos-x86_64
+            asset_name: rolypoly-macos-x86_64-build${{ github.run_number }}
 
     steps:
     - uses: actions/checkout@v3
