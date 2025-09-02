@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'cli-v*'
+  workflow_dispatch:
 
 # Needs write permission to create GitHub Releases
 permissions:
@@ -92,7 +93,7 @@ jobs:
     name: Generate Scorecard
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
@@ -101,7 +102,7 @@ jobs:
         run: |
           bash scripts/scorecard.sh > /dev/null
       - name: Upload Scorecard
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: scorecard
           path: SCORECARD.md

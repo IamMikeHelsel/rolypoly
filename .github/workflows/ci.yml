@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, "release/cli", "prerelease/cli" ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, "release/cli", "prerelease/cli" ]
+    branches: [ main ]
 
 # Minimal token permissions for CI
 permissions:
