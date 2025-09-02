@@ -1,8 +1,12 @@
-import 'dart:io';
-import 'package:desktop_drop/desktop_drop.dart';
+import 'dart:io' show Directory, File;
+import 'dart:typed_data';
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../services/rolypoly_cli.dart';
+import '../services/web_zip_service.dart';
+import '../services/web_download.dart';
+import '../widgets/drop_area.dart';
 
 class CompressScreen extends StatefulWidget {
   const CompressScreen({super.key});
@@ -14,6 +18,7 @@ class CompressScreen extends StatefulWidget {
 class _CompressScreenState extends State<CompressScreen> {
   final _cli = RolyPolyCli();
   final List<String> _inputs = [];
+  final Map<String, Uint8List> _inputsWeb = {}; // web: name -> bytes
   String? _archivePath;
   double _pct = 0;
   String _status = 'Idle';
@@ -33,7 +38,17 @@ class _CompressScreenState extends State<CompressScreen> {
 
   Future<void> _pickFiles() async {
     final files = await openFiles(acceptedTypeGroups: const [XTypeGroup(label: 'Any')]);
-    if (files.isNotEmpty) {
+    if (files.isEmpty) return;
+    if (kIsWeb) {
+      for (final xf in files) {
+        final bytes = await xf.readAsBytes();
+        var name = xf.name;
+        var i = 1;
+        while (_inputsWeb.containsKey(name)) { name = "${xf.name}(${i++})"; }
+        _inputsWeb[name] = bytes;
+      }
+      setState(() {});
+    } else {
       _addPaths(files.map((e) => e.path));
     }
   }
@@ -49,7 +64,7 @@ class _CompressScreenState extends State<CompressScreen> {
   }
 
   Future<void> _runCreate() async {
-    if (_inputs.isEmpty) return;
+    if ((kIsWeb && _inputsWeb.isEmpty) || (!kIsWeb && _inputs.isEmpty)) return;
     if (_running) return;
     setState(() {
       _running = true;
@@ -57,14 +72,22 @@ class _CompressScreenState extends State<CompressScreen> {
       _status = 'Starting…';
       _error = null;
     });
+    if (kIsWeb) {
+      try {
+        _status = 'Zipping in browser…';
+        final data = await WebZipService().createZip(_inputsWeb);
+        downloadBytes(data, 'archive.zip');
+        setState(() { _pct = 1; _status = 'Downloaded archive.zip'; _running = false; });
+      } catch (e) {
+        setState(() { _error = e.toString(); _running = false; });
+      }
+      return;
+    }
 
     var out = _archivePath;
     if (out == null || out.isEmpty) {
       final picked = await getSavePath(suggestedName: 'archive.zip', acceptedTypeGroups: const [XTypeGroup(extensions: ['zip'])]);
-      if (picked == null) {
-        setState(() => _running = false);
-        return;
-      }
+      if (picked == null) { setState(() => _running = false); return; }
       out = picked;
       setState(() => _archivePath = out);
     }
@@ -109,68 +132,70 @@ class _CompressScreenState extends State<CompressScreen> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             FilledButton.icon(onPressed: _running ? null : _pickFiles, icon: const Icon(Icons.add), label: const Text('Add Files')),
-            const SizedBox(width: 8),
-            OutlinedButton.icon(onPressed: _running ? null : _pickFolder, icon: const Icon(Icons.create_new_folder), label: const Text('Add Folder')),
+            if (!kIsWeb) ...[
+              const SizedBox(width: 8),
+              OutlinedButton.icon(onPressed: _running ? null : _pickFolder, icon: const Icon(Icons.create_new_folder), label: const Text('Add Folder')),
+            ],
             const Spacer(),
-            OutlinedButton.icon(onPressed: _running ? null : _chooseOutput, icon: const Icon(Icons.save_alt), label: Text(_archivePath == null ? 'Choose Output' : 'Change Output')),
+            if (!kIsWeb)
+              OutlinedButton.icon(onPressed: _running ? null : _chooseOutput, icon: const Icon(Icons.save_alt), label: Text(_archivePath == null ? 'Choose Output' : 'Change Output')),
             const SizedBox(width: 8),
-            FilledButton.icon(onPressed: _running || _inputs.isEmpty ? null : _runCreate, icon: const Icon(Icons.archive), label: const Text('Create')),
+            FilledButton.icon(
+              onPressed: _running || (kIsWeb ? _inputsWeb.isEmpty : _inputs.isEmpty) ? null : _runCreate,
+              icon: const Icon(Icons.archive),
+              label: Text(kIsWeb ? 'Create (download)' : 'Create'),
+            ),
           ]),
           const SizedBox(height: 12),
-          if (_archivePath != null) Text('Output: $_archivePath', style: const TextStyle(fontStyle: FontStyle.italic)),
+          if (!kIsWeb && _archivePath != null) Text('Output: $_archivePath', style: const TextStyle(fontStyle: FontStyle.italic)),
           const SizedBox(height: 12),
           Expanded(
-            child: DropTarget(
-              onDragEntered: (_) => setState(() => _dragging = true),
-              onDragExited: (_) => setState(() => _dragging = false),
-              onDragDone: (detail) {
-                final paths = detail.files.map((f) => f.path).whereType<String>();
-                _addPaths(paths);
-                setState(() => _dragging = false);
-              },
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: _dragging ? Colors.blue.withOpacity(0.06) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: _dragging ? Colors.blue : Colors.grey.shade300, style: BorderStyle.solid),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: _inputs.isEmpty
-                      ? const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.upload_file, size: 48, color: Colors.grey),
-                              SizedBox(height: 8),
-                              Text('Drag & drop files or folders here'),
-                              SizedBox(height: 4),
-                              Text('Or use Add Files / Add Folder', style: TextStyle(color: Colors.grey)),
-                            ],
-                          ),
-                        )
-                      : ListView.separated(
-                          itemCount: _inputs.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1),
-                          itemBuilder: (_, i) {
-                            final p = _inputs[i];
-                            return ListTile(
-                              dense: true,
-                              title: Text(p, maxLines: 1, overflow: TextOverflow.ellipsis),
-                              leading: const Icon(Icons.insert_drive_file),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.close),
-                                tooltip: 'Remove',
-                                onPressed: _running
-                                    ? null
-                                    : () => setState(() {
-                                          _inputs.removeAt(i);
-                                        }),
-                              ),
-                            );
-                          },
+            child: DropArea(
+              onDropped: (paths) => _addPaths(paths),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Builder(builder: (_) {
+                  final items = kIsWeb ? _inputsWeb.keys.toList() : _inputs;
+                  if (items.isEmpty) {
+                    return const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.upload_file, size: 48, color: Colors.grey),
+                          SizedBox(height: 8),
+                          Text('Drag & drop files here'),
+                          SizedBox(height: 4),
+                          Text('Or use Add Files', style: TextStyle(color: Colors.grey)),
+                        ],
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                    itemCount: items.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (_, i) {
+                      final name = items[i];
+                      return ListTile(
+                        dense: true,
+                        title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        leading: const Icon(Icons.insert_drive_file),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.close),
+                          tooltip: 'Remove',
+                          onPressed: _running
+                              ? null
+                              : () => setState(() {
+                                    if (kIsWeb) {
+                                      _inputsWeb.remove(name);
+                                    } else {
+                                      _inputs.removeAt(i);
+                                    }
+                                  }),
                         ),
-                ),
+                      );
+                    },
+                  );
+                }),
               ),
             ),
           ),
@@ -179,10 +204,11 @@ class _CompressScreenState extends State<CompressScreen> {
           const SizedBox(height: 8),
           Row(children: [
             Expanded(child: Text(_status)),
-            if (_inputs.isNotEmpty && !_running)
+            if (((!kIsWeb && _inputs.isNotEmpty) || (kIsWeb && _inputsWeb.isNotEmpty)) && !_running)
               TextButton.icon(
                 onPressed: () => setState(() {
                   _inputs.clear();
+                  _inputsWeb.clear();
                   _pct = 0;
                   _status = 'Idle';
                 }),
