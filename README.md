@@ -28,3 +28,8 @@ Fast, safe ZIP archiver written in Rust with a clean CLI.
 - Tag: `./scripts/release.sh cli 0.1.0`
 - Push: `git push origin release/cli && git push origin cli-v0.1.0`
 - GitHub Actions will build artifacts and create a Release with a changelog
+
+**GUI (Flutter, optional)**
+- Code lives in `gui/` and shells out to the CLI.
+- Dev quickstart: `./scripts/gui_dev.sh` (requires Flutter installed)
+- Details: see `gui/README.md`
