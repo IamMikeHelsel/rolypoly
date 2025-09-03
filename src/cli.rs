@@ -1,4 +1,5 @@
 use crate::archive::ArchiveManager;
+use crate::archive::ArchiveOptions;
 use crate::progress;
 use anyhow::Result;
 use clap::{ArgAction, Parser, Subcommand};
@@ -17,6 +18,15 @@ pub struct Cli {
     /// Emit progress updates (JSON if --json, otherwise human)
     #[arg(long, global = true, action = ArgAction::SetTrue)]
     pub progress: bool,
+    /// Compression level (0-9). 0 = store, higher = more compression
+    #[arg(long, global = true)]
+    pub level: Option<i32>,
+    /// Automatically store incompressible files (faster)
+    #[arg(long, global = true, default_value_t = true)]
+    pub auto_store: bool,
+    /// Entropy threshold (0-8) above which a file is considered incompressible
+    #[arg(long, global = true, default_value_t = 7.8)]
+    pub store_entropy_threshold: f64,
     #[command(subcommand)]
     pub command: Commands,
 }
@@ -67,7 +77,11 @@ impl Cli {
         let progress = if self.json { self.progress } else { true };
         progress::set_output_mode(self.json, progress);
 
-        let manager = ArchiveManager::new();
+        let mut opts = ArchiveOptions::default();
+        opts.compression_level = self.level;
+        opts.auto_store = self.auto_store;
+        opts.store_entropy_threshold = self.store_entropy_threshold;
+        let manager = ArchiveManager::with_options(opts);
 
         match self.command {
             Commands::Create { archive, files } => {
@@ -231,6 +245,9 @@ mod tests {
         let cli = Cli {
             json: false,
             progress: false,
+            level: None,
+            auto_store: true,
+            store_entropy_threshold: 7.8,
             command: Commands::Create {
                 archive: archive_path.clone(),
                 files: vec![test_file],
@@ -265,6 +282,9 @@ mod tests {
         let cli = Cli {
             json: false,
             progress: false,
+            level: None,
+            auto_store: true,
+            store_entropy_threshold: 7.8,
             command: Commands::Extract {
                 archive: archive_path,
                 output: extract_dir.clone(),
@@ -298,6 +318,9 @@ mod tests {
         let cli = Cli {
             json: false,
             progress: false,
+            level: None,
+            auto_store: true,
+            store_entropy_threshold: 7.8,
             command: Commands::List {
                 archive: archive_path,
             },
@@ -318,6 +341,9 @@ mod tests {
         let cli = Cli {
             json: false,
             progress: false,
+            level: None,
+            auto_store: true,
+            store_entropy_threshold: 7.8,
             command: Commands::Create {
                 archive: archive_path,
                 files: vec![],
@@ -345,6 +371,9 @@ mod tests {
         let cli = Cli {
             json: false,
             progress: false,
+            level: None,
+            auto_store: true,
+            store_entropy_threshold: 7.8,
             command: Commands::Validate {
                 archive: archive_path,
             },
@@ -370,6 +399,9 @@ mod tests {
         let cli = Cli {
             json: false,
             progress: false,
+            level: None,
+            auto_store: true,
+            store_entropy_threshold: 7.8,
             command: Commands::Stats {
                 archive: archive_path,
             },
@@ -392,6 +424,9 @@ mod tests {
         let cli = Cli {
             json: false,
             progress: false,
+            level: None,
+            auto_store: true,
+            store_entropy_threshold: 7.8,
             command: Commands::Hash { file: test_file },
         };
 

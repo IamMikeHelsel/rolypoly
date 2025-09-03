@@ -1,6 +1,10 @@
-import 'dart:io';
+import 'dart:io' show Directory, File;
+import 'dart:typed_data';
+import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../services/rolypoly_cli.dart';
+import '../services/web_zip_read.dart';
 
 class ValidateStatsScreen extends StatefulWidget {
   const ValidateStatsScreen({super.key});
@@ -11,6 +15,8 @@ class ValidateStatsScreen extends StatefulWidget {
 class _ValidateStatsScreenState extends State<ValidateStatsScreen> {
   final _cli = RolyPolyCli();
   String? _archive;
+  Uint8List? _webBytes;
+  String? _webName;
   String _validate = 'Unknown';
   Map<String, dynamic>? _stats;
   String _status = 'Idle';
@@ -23,21 +29,53 @@ class _ValidateStatsScreenState extends State<ValidateStatsScreen> {
     setState(() { _archive = zip; });
   }
 
+  Future<void> _pickArchive() async {
+    final f = await openFile(acceptedTypeGroups: const [XTypeGroup(label: 'ZIP', extensions: ['zip'])]);
+    if (f == null) return;
+    if (kIsWeb) {
+      _webBytes = await f.readAsBytes();
+      _webName = f.name;
+      setState(() {});
+    } else {
+      setState(() { _archive = f.path; });
+    }
+  }
+
   Future<void> _runValidate() async {
-    if (_archive == null) return;
     setState(() { _status = 'Validating…'; _validate = 'Running'; });
-    await for (final evt in _cli.streamValidate(_archive!)) {
-      if (evt['event'] == 'done') {
+    if (kIsWeb) {
+      if (_webBytes == null) { setState(() { _status = 'Pick a ZIP'; _validate = 'Unknown'; }); return; }
+      try {
+        WebZipReadService().validate(_webBytes!);
         setState(() { _validate = 'OK'; _status = 'Validated'; });
+      } catch (e) {
+        setState(() { _validate = 'Failed'; _status = 'Failed: $e'; });
+      }
+    } else {
+      if (_archive == null) return;
+      await for (final evt in _cli.streamValidate(_archive!)) {
+        if (evt['event'] == 'done') {
+          setState(() { _validate = 'OK'; _status = 'Validated'; });
+        }
       }
     }
   }
 
   Future<void> _runStats() async {
-    if (_archive == null) return;
     setState(() { _status = 'Getting stats…'; });
-    final data = await _cli.statsJson(_archive!);
-    setState(() { _stats = data; _status = data != null ? 'Done' : 'Failed'; });
+    if (kIsWeb) {
+      if (_webBytes == null) { setState(() { _status = 'Pick a ZIP'; }); return; }
+      try {
+        final data = WebZipReadService().stats(_webBytes!);
+        setState(() { _stats = data; _status = 'Done'; });
+      } catch (e) {
+        setState(() { _status = 'Failed: $e'; });
+      }
+    } else {
+      if (_archive == null) return;
+      final data = await _cli.statsJson(_archive!);
+      setState(() { _stats = data; _status = data != null ? 'Done' : 'Failed'; });
+    }
   }
 
   @override
@@ -48,14 +86,18 @@ class _ValidateStatsScreenState extends State<ValidateStatsScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            ElevatedButton(onPressed: _prepareSample, child: const Text('Prepare Sample')),
+            if (!kIsWeb) ...[
+              ElevatedButton(onPressed: _prepareSample, child: const Text('Prepare Sample')),
+              const SizedBox(width: 8),
+            ],
+            OutlinedButton.icon(onPressed: _pickArchive, icon: const Icon(Icons.upload_file), label: const Text('Pick Archive')),
             const SizedBox(width: 8),
             ElevatedButton(onPressed: _runValidate, child: const Text('Validate')),
             const SizedBox(width: 8),
             ElevatedButton(onPressed: _runStats, child: const Text('Stats')),
           ]),
           const SizedBox(height: 12),
-          Text('Archive: ${_archive ?? '-'}'),
+          Text('Archive: ${kIsWeb ? (_webName ?? '-') : (_archive ?? '-') }'),
           const SizedBox(height: 12),
           Row(children: [
             Chip(label: Text('Validate: $_validate')),
@@ -81,4 +123,3 @@ class _ValidateStatsScreenState extends State<ValidateStatsScreen> {
     );
   }
 }
-

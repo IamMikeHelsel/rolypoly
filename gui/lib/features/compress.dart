@@ -60,7 +60,7 @@ class _CompressScreenState extends State<CompressScreen> {
   }
 
   Future<void> _chooseOutput() async {
-    final savePath = await getSavePath(suggestedName: 'archive.zip', acceptedTypeGroups: const [XTypeGroup(extensions: ['zip'])]);
+    final savePath = await pickSaveZip(suggestedName: 'archive.zip');
     if (savePath != null) setState(() => _archivePath = savePath);
   }
 

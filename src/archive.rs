@@ -9,17 +9,36 @@ use walkdir::WalkDir;
 use zip::write::SimpleFileOptions;
 use zip::{ZipArchive, ZipWriter};
 
-pub struct ArchiveManager;
+#[derive(Clone, Debug)]
+pub struct ArchiveOptions {
+    pub compression_level: Option<i32>,
+    pub auto_store: bool,
+    // if estimated entropy > threshold -> store
+    pub store_entropy_threshold: f64,
+    // buffer size used for I/O copies
+    pub io_buffer_size: usize,
+}
 
-impl Default for ArchiveManager {
+impl Default for ArchiveOptions {
     fn default() -> Self {
-        Self::new()
+        Self {
+            compression_level: None,
+            auto_store: true,
+            store_entropy_threshold: 7.8,
+            io_buffer_size: 256 * 1024,
+        }
     }
 }
 
+pub struct ArchiveManager {
+    opts: ArchiveOptions,
+}
+
 impl ArchiveManager {
-    pub fn new() -> Self {
-        Self
+    pub fn new() -> Self { Self { opts: ArchiveOptions::default() } }
+
+    pub fn with_options(opts: ArchiveOptions) -> Self {
+        Self { opts }
     }
 
     /// Validate the integrity of a ZIP archive
@@ -142,8 +161,7 @@ impl ArchiveManager {
     pub fn create_archive<P: AsRef<Path>>(&self, archive_path: P, files: &[P]) -> Result<()> {
         let file = File::create(archive_path.as_ref())?;
         let mut zip = ZipWriter::new(file);
-        let options =
-            SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+        let base_options = SimpleFileOptions::default();
 
         // Count total files for progress bar
         let mut total_files = 0;
@@ -205,12 +223,24 @@ impl ArchiveManager {
                         "current": processed, "total": total, "pct": pct
                     }));
                 }
-                self.add_file_to_zip(&mut zip, path, &options)?;
+                // Choose method per-file
+                let method = if self.opts.auto_store && is_incompressible(path, self.opts.store_entropy_threshold)? {
+                    zip::CompressionMethod::Stored
+                } else {
+                    zip::CompressionMethod::Deflated
+                };
+                let mut options = base_options.clone().compression_method(method);
+                if let Some(level) = self.opts.compression_level {
+                    options = options.compression_level(Some(level as i64));
+                }
+                self.add_file_to_zip(&mut zip, path, &options, self.opts.io_buffer_size)?;
                 if let Some(pb) = &pb {
                     pb.inc(1);
                 }
             } else if path.is_dir() {
-                self.add_dir_to_zip_with_progress(&mut zip, path, &options, &pb, mode.json, total, &mut processed)?;
+                let mut options = base_options.clone().compression_method(zip::CompressionMethod::Deflated);
+                if let Some(level) = self.opts.compression_level { options = options.compression_level(Some(level as i64)); }
+                self.add_dir_to_zip_with_progress(&mut zip, path, &options, &pb, mode.json, total, &mut processed, self.opts.clone())?;
             }
         }
 
@@ -321,11 +351,12 @@ impl ArchiveManager {
         zip: &mut ZipWriter<File>,
         file_path: &Path,
         options: &SimpleFileOptions,
+        buf_size: usize,
     ) -> Result<()> {
         let name = file_path.file_name().unwrap().to_string_lossy();
         zip.start_file(name, *options)?;
         let mut file = File::open(file_path)?;
-        std::io::copy(&mut file, zip)?;
+        copy_buffered(&mut file, zip, buf_size)?;
         Ok(())
     }
 
@@ -338,6 +369,7 @@ impl ArchiveManager {
         json: bool,
         total: u64,
         processed: &mut u64,
+        opts: ArchiveOptions,
     ) -> Result<()> {
         let walkdir = WalkDir::new(dir_path);
         let it = walkdir.into_iter();
@@ -361,9 +393,16 @@ impl ArchiveManager {
                 if let Some(pb) = pb {
                     pb.set_message(format!("Adding: {}", path.display()));
                 }
-                zip.start_file(&archive_path, *options)?;
+                let method = if opts.auto_store && is_incompressible(path, opts.store_entropy_threshold)? {
+                    zip::CompressionMethod::Stored
+                } else {
+                    zip::CompressionMethod::Deflated
+                };
+                let mut per_file = options.clone().compression_method(method);
+                if let Some(level) = opts.compression_level { per_file = per_file.compression_level(Some(level as i64)); }
+                zip.start_file(&archive_path, per_file)?;
                 let mut file = File::open(path)?;
-                std::io::copy(&mut file, zip)?;
+                copy_buffered(&mut file, zip, opts.io_buffer_size)?;
                 if let Some(pb) = pb {
                     pb.inc(1);
                 }
@@ -382,6 +421,41 @@ impl ArchiveManager {
 
         Ok(())
     }
+}
+
+fn copy_buffered<R: std::io::Read, W: std::io::Write>(reader: &mut R, writer: &mut W, buf_size: usize) -> Result<u64> {
+    let mut buf = vec![0u8; buf_size];
+    let mut total: u64 = 0;
+    loop {
+        let n = reader.read(&mut buf)?;
+        if n == 0 { break; }
+        writer.write_all(&buf[..n])?;
+        total += n as u64;
+    }
+    Ok(total)
+}
+
+fn is_incompressible(path: &Path, entropy_threshold: f64) -> Result<bool> {
+    // Simple entropy-based heuristic on the first 256 KiB
+    let mut f = File::open(path)?;
+    let mut buf = vec![0u8; 256 * 1024];
+    let n = f.read(&mut buf)?;
+    if n == 0 {
+        return Ok(false);
+    }
+    let slice = &buf[..n];
+    let mut freq = [0usize; 256];
+    for &b in slice {
+        freq[b as usize] += 1;
+    }
+    let total = n as f64;
+    let mut entropy = 0.0f64;
+    for &count in &freq {
+        if count == 0 { continue; }
+        let p = count as f64 / total;
+        entropy -= p * p.log2();
+    }
+    Ok(entropy >= entropy_threshold)
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
