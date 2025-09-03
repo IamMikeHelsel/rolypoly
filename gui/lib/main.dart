@@ -1,6 +1,7 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'features/compress.dart';
 import 'features/extract.dart';
 import 'features/inspect.dart';
@@ -34,6 +35,7 @@ class _HomeState extends State<_Home> {
   final _titles = const ['Compress', 'Extract', 'Inspect', 'Validate & Stats'];
   @override
   Widget build(BuildContext context) {
+    const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: 'dev');
     final banner = kIsWeb
         ? MaterialBanner(
             content: const Text('Web preview: operations require a backend or will be limited. Use desktop app for full functionality.'),
@@ -49,6 +51,25 @@ class _HomeState extends State<_Home> {
         children: [
           if (banner != null) banner,
           Expanded(child: _pages[_index]),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Row(
+              children: [
+                Text('v$appVersion', style: Theme.of(context).textTheme.bodySmall),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: () => _showAbout(context, appVersion),
+                  icon: const Icon(Icons.info_outline, size: 16),
+                  label: const Text('About'),
+                ),
+                TextButton.icon(
+                  onPressed: () => _openGitHub(context),
+                  icon: const Icon(Icons.open_in_new, size: 16),
+                  label: const Text('GitHub'),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -63,4 +84,24 @@ class _HomeState extends State<_Home> {
       ),
     );
   }
+}
+
+void _openGitHub(BuildContext context) {
+  const url = 'https://github.com/user/rolypoly';
+  if (!launchUrlString(url)) {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Repo: https://github.com/user/rolypoly')));
+  }
+}
+
+void _showAbout(BuildContext context, String version) {
+  showAboutDialog(
+    context: context,
+    applicationName: 'RolyPoly',
+    applicationVersion: version,
+    children: const [
+      Text('Modern ZIP archiver — CLI, Desktop, and PWA.'),
+      SizedBox(height: 8),
+      Text('Desktop uses the Rust CLI for full performance. Web provides a convenient preview (client-side).'),
+    ],
+  );
 }

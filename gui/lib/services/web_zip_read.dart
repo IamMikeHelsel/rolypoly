@@ -54,4 +54,16 @@ class WebZipReadService {
       downloadBytes(Uint8List.fromList(data), f.name.split('/').last);
     }
   }
+
+  Future<void> extractSelected(Uint8List bytes, List<String> names) async {
+    if (names.isEmpty) return;
+    final a = _decode(bytes);
+    final wanted = names.toSet();
+    for (final f in a.files) {
+      if (!f.isFile) continue;
+      if (!wanted.contains(f.name)) continue;
+      final data = f.content as List<int>;
+      downloadBytes(Uint8List.fromList(data), f.name.split('/').last);
+    }
+  }
 }

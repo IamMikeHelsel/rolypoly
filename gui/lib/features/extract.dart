@@ -1,8 +1,11 @@
-import 'dart:io';
-import 'package:desktop_drop/desktop_drop.dart';
+import 'dart:io' show Directory, File; // desktop
+import 'dart:typed_data';
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../services/rolypoly_cli.dart';
+import '../services/web_zip_read.dart';
+import '../widgets/drop_area.dart';
 
 class ExtractScreen extends StatefulWidget {
   const ExtractScreen({super.key});
@@ -19,6 +22,11 @@ class _ExtractScreenState extends State<ExtractScreen> {
   bool _running = false;
   bool _dragging = false;
   String? _error;
+  // web state
+  Uint8List? _webBytes;
+  String? _webName;
+  List<String> _entries = [];
+  final Set<String> _selected = {};
 
   Future<void> _prepareSample() async {
     final tmp = Directory.systemTemp.createTempSync('rp');
@@ -30,7 +38,22 @@ class _ExtractScreenState extends State<ExtractScreen> {
 
   Future<void> _pickArchive() async {
     final file = await openFile(acceptedTypeGroups: const [XTypeGroup(label: 'ZIP', extensions: ['zip'])]);
-    if (file != null) setState(() => _archive = file.path);
+    if (file == null) return;
+    if (kIsWeb) {
+      _webBytes = await file.readAsBytes();
+      _webName = file.name;
+      try {
+        _entries = WebZipReadService().list(_webBytes!);
+        _selected
+          ..clear()
+          ..addAll(_entries);
+        setState(() { _status = 'Ready'; });
+      } catch (e) {
+        setState(() { _status = 'Failed to read: $e'; });
+      }
+    } else {
+      setState(() => _archive = file.path);
+    }
   }
 
   Future<void> _pickOutDir() async {
@@ -39,6 +62,17 @@ class _ExtractScreenState extends State<ExtractScreen> {
   }
 
   Future<void> _runExtract() async {
+    if (kIsWeb) {
+      if (_webBytes == null) return;
+      setState(() { _running = true; _status = 'Preparing downloads…'; });
+      try {
+        await WebZipReadService().extractSelected(_webBytes!, _selected.toList());
+        setState(() { _running = false; _status = 'Downloaded'; });
+      } catch (e) {
+        setState(() { _running = false; _status = 'Failed: $e'; });
+      }
+      return;
+    }
     if (_archive == null || _outDir == null) return;
     setState(() { _running = true; _pct = 0; _status = 'Starting…'; _error = null; });
     try {
@@ -68,29 +102,76 @@ class _ExtractScreenState extends State<ExtractScreen> {
           Row(children: [
             OutlinedButton.icon(onPressed: _running ? null : _pickArchive, icon: const Icon(Icons.upload_file), label: const Text('Pick Archive')),
             const SizedBox(width: 8),
-            OutlinedButton.icon(onPressed: _running ? null : _pickOutDir, icon: const Icon(Icons.folder_open), label: const Text('Output Folder')),
+            if (!kIsWeb)
+              OutlinedButton.icon(onPressed: _running ? null : _pickOutDir, icon: const Icon(Icons.folder_open), label: const Text('Output Folder')),
             const Spacer(),
-            FilledButton.icon(onPressed: _running || _archive == null || _outDir == null ? null : _runExtract, icon: const Icon(Icons.unarchive), label: const Text('Extract')),
+            FilledButton.icon(
+              onPressed: _running ? null : _runExtract,
+              icon: const Icon(Icons.unarchive),
+              label: Text(kIsWeb ? 'Download' : 'Extract'),
+            ),
           ]),
           const SizedBox(height: 12),
-          Expanded(
-            child: DropTarget(
-              onDragEntered: (_) => setState(() => _dragging = true),
-              onDragExited: (_) => setState(() => _dragging = false),
-              onDragDone: (d) {
-                final firstZip = d.files.map((f) => f.path).whereType<String>().firstWhere(
-                      (p) => p.toLowerCase().endsWith('.zip'),
-                      orElse: () => '',
-                    );
-                if (firstZip.isNotEmpty) setState(() => _archive = firstZip);
-                setState(() => _dragging = false);
-              },
+          if (kIsWeb)
+            Expanded(
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: _dragging ? Colors.blue.withOpacity(0.06) : Colors.transparent,
-                  border: Border.all(color: _dragging ? Colors.blue : Colors.grey.shade300),
+                  border: Border.all(color: Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(8),
                 ),
+                child: _webBytes == null
+                    ? const Center(child: Text('Pick a ZIP to see contents'))
+                    : Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(children: [
+                              Text('Selected ${_selected.length}/${_entries.length}'),
+                              const Spacer(),
+                              TextButton(
+                                onPressed: () => setState(() { _selected..clear()..addAll(_entries); }),
+                                child: const Text('Select All'),
+                              ),
+                              TextButton(
+                                onPressed: () => setState(() { _selected.clear(); }),
+                                child: const Text('None'),
+                              ),
+                            ]),
+                          ),
+                          const Divider(height: 1),
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: _entries.length,
+                              itemBuilder: (_, i) {
+                                final name = _entries[i];
+                                final selected = _selected.contains(name);
+                                return CheckboxListTile(
+                                  dense: true,
+                                  value: selected,
+                                  onChanged: (v) {
+                                    setState(() {
+                                      if (v == true) { _selected.add(name); } else { _selected.remove(name); }
+                                    });
+                                  },
+                                  title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            )
+          else
+            Expanded(
+              child: DropArea(
+                onDropped: (paths) {
+                  final firstZip = paths.firstWhere(
+                    (p) => p.toLowerCase().endsWith('.zip'),
+                    orElse: () => '',
+                  );
+                  if (firstZip.isNotEmpty) setState(() => _archive = firstZip);
+                },
                 child: Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -110,9 +191,8 @@ class _ExtractScreenState extends State<ExtractScreen> {
                 ),
               ),
             ),
-          ),
           const SizedBox(height: 12),
-          LinearProgressIndicator(value: _running ? null : (_pct == 0 ? null : _pct)),
+          if (!kIsWeb) LinearProgressIndicator(value: _running ? null : (_pct == 0 ? null : _pct)),
           const SizedBox(height: 8),
           Text(_status),
           if (_error != null) Text(_error!, style: const TextStyle(color: Colors.red)),

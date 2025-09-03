@@ -32,7 +32,14 @@ jobs:
         run: flutter pub get
       - name: Build web
         working-directory: gui
-        run: flutter build web --release
+        env:
+          APP_VERSION: ${{ github.ref_name }}@${{ github.sha }}
+          PAGES_CNAME: ${{ vars.PAGES_CNAME }}
+        run: |
+          flutter build web --release --dart-define=APP_VERSION="$APP_VERSION"
+          if [ -n "${PAGES_CNAME}" ]; then
+            echo "$PAGES_CNAME" > build/web/CNAME
+          fi
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
