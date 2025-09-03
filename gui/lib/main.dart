@@ -16,12 +16,21 @@ class RolyPolyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final light = FlexThemeData.light(scheme: FlexScheme.damask);
-    final dark = FlexThemeData.dark(scheme: FlexScheme.ebonyClay);
+    final light = FlexThemeData.light(
+      scheme: FlexScheme.indigo,
+      useMaterial3: true,
+      appBarElevation: 0,
+    );
+    final dark = FlexThemeData.dark(
+      scheme: FlexScheme.indigo,
+      useMaterial3: true,
+      appBarElevation: 0,
+    );
     return MaterialApp(
       title: 'RolyPoly',
       theme: light,
       darkTheme: dark,
+      themeMode: ThemeMode.dark,
       home: const _Home(),
       debugShowCheckedModeBanner: false,
     );
@@ -74,6 +83,7 @@ class _HomeState extends State<_Home> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
         destinations: const [
           NavigationDestination(icon: Icon(Icons.archive), label: 'Compress'),
           NavigationDestination(icon: Icon(Icons.unarchive), label: 'Extract'),
@@ -86,9 +96,10 @@ class _HomeState extends State<_Home> {
   }
 }
 
-void _openGitHub(BuildContext context) {
+Future<void> _openGitHub(BuildContext context) async {
   const url = 'https://github.com/user/rolypoly';
-  if (!launchUrlString(url)) {
+  final ok = await launchUrlString(url);
+  if (!ok) {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Repo: https://github.com/user/rolypoly')));
   }
 }

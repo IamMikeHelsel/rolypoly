@@ -127,12 +127,11 @@ class _CompressScreenState extends State<CompressScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
+    return Padding(
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            FilledButton.icon(onPressed: _running ? null : _pickFiles, icon: const Icon(Icons.add), label: const Text('Add Files')),
+            FilledButton.tonalIcon(onPressed: _running ? null : _pickFiles, icon: const Icon(Icons.add), label: const Text('Add Files')),
             if (!kIsWeb) ...[
               const SizedBox(width: 8),
               OutlinedButton.icon(onPressed: _running ? null : _pickFolder, icon: const Icon(Icons.create_new_folder), label: const Text('Add Folder')),
@@ -141,9 +140,9 @@ class _CompressScreenState extends State<CompressScreen> {
             if (!kIsWeb)
               OutlinedButton.icon(onPressed: _running ? null : _chooseOutput, icon: const Icon(Icons.save_alt), label: Text(_archivePath == null ? 'Choose Output' : 'Change Output')),
             const SizedBox(width: 8),
-            FilledButton.icon(
+            FilledButton.tonalIcon(
               onPressed: _running || (kIsWeb ? _inputsWeb.isEmpty : _inputs.isEmpty) ? null : _runCreate,
-              icon: const Icon(Icons.archive),
+              icon: const Icon(Icons.archive_outlined),
               label: Text(kIsWeb ? 'Create (download)' : 'Create'),
             ),
           ]),
@@ -219,7 +218,6 @@ class _CompressScreenState extends State<CompressScreen> {
           ]),
           if (_error != null) Text(_error!, style: const TextStyle(color: Colors.red)),
         ]),
-      ),
-    );
+      );
   }
 }

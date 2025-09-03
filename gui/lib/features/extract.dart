@@ -94,9 +94,7 @@ class _ExtractScreenState extends State<ExtractScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('RolyPoly – Extract')),
-      body: Padding(
+    return Padding(
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
@@ -105,7 +103,7 @@ class _ExtractScreenState extends State<ExtractScreen> {
             if (!kIsWeb)
               OutlinedButton.icon(onPressed: _running ? null : _pickOutDir, icon: const Icon(Icons.folder_open), label: const Text('Output Folder')),
             const Spacer(),
-            FilledButton.icon(
+            FilledButton.tonalIcon(
               onPressed: _running ? null : _runExtract,
               icon: const Icon(Icons.unarchive),
               label: Text(kIsWeb ? 'Download' : 'Extract'),
@@ -197,7 +195,6 @@ class _ExtractScreenState extends State<ExtractScreen> {
           Text(_status),
           if (_error != null) Text(_error!, style: const TextStyle(color: Colors.red)),
         ]),
-      ),
-    );
+      );
   }
 }

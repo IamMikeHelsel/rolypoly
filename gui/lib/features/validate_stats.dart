@@ -80,21 +80,19 @@ class _ValidateStatsScreenState extends State<ValidateStatsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('RolyPoly – Validate & Stats')),
-      body: Padding(
+    return Padding(
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             if (!kIsWeb) ...[
-              ElevatedButton(onPressed: _prepareSample, child: const Text('Prepare Sample')),
+              FilledButton.tonal(onPressed: _prepareSample, child: const Text('Sample')),
               const SizedBox(width: 8),
             ],
             OutlinedButton.icon(onPressed: _pickArchive, icon: const Icon(Icons.upload_file), label: const Text('Pick Archive')),
             const SizedBox(width: 8),
-            ElevatedButton(onPressed: _runValidate, child: const Text('Validate')),
+            FilledButton.tonal(onPressed: _runValidate, child: const Text('Validate')),
             const SizedBox(width: 8),
-            ElevatedButton(onPressed: _runStats, child: const Text('Stats')),
+            FilledButton.tonal(onPressed: _runStats, child: const Text('Stats')),
           ]),
           const SizedBox(height: 12),
           Text('Archive: ${kIsWeb ? (_webName ?? '-') : (_archive ?? '-') }'),
@@ -119,7 +117,6 @@ class _ValidateStatsScreenState extends State<ValidateStatsScreen> {
           const SizedBox(height: 8),
           Text(_status),
         ]),
-      ),
-    );
+      );
   }
 }

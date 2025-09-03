@@ -64,36 +64,33 @@ class _InspectScreenState extends State<InspectScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('RolyPoly – Inspect')),
-      body: Padding(
+    return Padding(
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             if (!kIsWeb) ...[
-              ElevatedButton(onPressed: _prepareSample, child: const Text('Prepare Sample')),
+              FilledButton.tonal(onPressed: _prepareSample, child: const Text('Sample')),
               const SizedBox(width: 12),
             ],
             OutlinedButton.icon(onPressed: _pickArchive, icon: const Icon(Icons.upload_file), label: const Text('Pick Archive')),
             const SizedBox(width: 12),
-            ElevatedButton(onPressed: (!kIsWeb && _archive == null) && (kIsWeb && _webBytes == null) ? null : _runList, child: const Text('List')),
+            FilledButton.tonal(onPressed: (!kIsWeb && _archive == null) && (kIsWeb && _webBytes == null) ? null : _runList, child: const Text('List')),
           ]),
           const SizedBox(height: 12),
           Text('Archive: ${kIsWeb ? (_webName ?? '-') : (_archive ?? '-') }'),
           const SizedBox(height: 12),
           Expanded(
-            child: Container(
+            child: DecoratedBox(
               decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
               child: ListView.builder(
                 itemCount: _files.length,
-                itemBuilder: (ctx, i) => ListTile(title: Text(_files[i])),
+                itemBuilder: (ctx, i) => ListTile(dense: true, title: Text(_files[i], maxLines: 1, overflow: TextOverflow.ellipsis)),
               ),
             ),
           ),
           const SizedBox(height: 8),
           Text(_status),
         ]),
-      ),
-    );
+      );
   }
 }
