@@ -118,15 +118,6 @@ class RolyPolyGUITester:
             "Binary compiled successfully" if returncode == 0 else "Binary compilation failed",
             stderr if returncode != 0 else ""
         )
-        
-        # Test GUI compilation (if possible)
-        returncode, stdout, stderr = self.run_command(["cargo", "tauri", "build", "--ci"], timeout=120)
-        self.add_result(
-            "GUI Compilation",
-            returncode == 0,
-            "GUI compiled successfully" if returncode == 0 else "GUI compilation failed",
-            stderr if returncode != 0 else ""
-        )
     
     def test_backend_components(self):
         """Test all backend GUI components"""

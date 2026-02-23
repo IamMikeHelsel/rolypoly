@@ -51,7 +51,6 @@ path = "src/bin/rolypoly.rs"
 
 [features]
 default = []
-gui = []
 # Choose compression backend for flate2 (zip uses flate2)
 # Only one of these should be enabled at a time in production builds.
 backend-zlib = ["flate2/zlib"]

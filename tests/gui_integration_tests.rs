@@ -1,4 +1,3 @@
-#![cfg(feature = "gui")]
 use anyhow::Result;
 use std::fs;
 use tempfile::TempDir;
