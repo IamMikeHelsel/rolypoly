@@ -294,7 +294,14 @@ impl ArchiveManager {
 
         for i in 0..archive.len() {
             let mut file = archive.by_index(i)?;
-            let output_path = output_dir.as_ref().join(file.name());
+            let safe_path = match file.enclosed_name() {
+                Some(path) => path.to_owned(),
+                None => {
+                    return Err(anyhow::anyhow!("Invalid or malicious path in archive: {}", file.name()));
+                }
+            };
+            let output_path = output_dir.as_ref().join(&safe_path);
+
             if let Some(pb) = &pb {
                 pb.set_message(format!("Extracting: {}", file.name()));
             }
