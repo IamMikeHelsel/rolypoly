@@ -41,6 +41,10 @@ tempfile = "3.10"
 name = "performance_benchmark"
 harness = false
 
+[[bench]]
+name = "list_benchmark"
+harness = false
+
 [lib]
 name = "rolypoly"
 path = "src/lib.rs"

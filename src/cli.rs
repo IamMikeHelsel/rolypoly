@@ -127,8 +127,8 @@ impl Cli {
                 // Otherwise progress and completion messages are handled by the archiver
             }
             Commands::List { archive } => {
-                let contents = manager.list_archive(&archive)?;
                 if self.json {
+                    let contents = manager.list_archive(&archive)?;
                     #[derive(Serialize)]
                     struct Out {
                         archive: String,
@@ -143,12 +143,13 @@ impl Cli {
                     );
                 } else {
                     println!("Archive: {}", archive.display());
-                    if contents.is_empty() {
+                    let mut count = 0;
+                    manager.list_archive_with_callback(&archive, |item| {
+                        println!("  {item}");
+                        count += 1;
+                    })?;
+                    if count == 0 {
                         println!("Archive is empty");
-                    } else {
-                        for item in contents {
-                            println!("  {item}");
-                        }
                     }
                 }
             }

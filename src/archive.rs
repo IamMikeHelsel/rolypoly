@@ -334,16 +334,26 @@ impl ArchiveManager {
 
     /// List contents of a ZIP archive
     pub fn list_archive<P: AsRef<Path>>(&self, archive_path: P) -> Result<Vec<String>> {
+        let mut contents = Vec::new();
+        self.list_archive_with_callback(archive_path, |name| contents.push(name.to_string()))?;
+        Ok(contents)
+    }
+
+    /// List contents of a ZIP archive with a callback
+    pub fn list_archive_with_callback<P, F>(&self, archive_path: P, mut callback: F) -> Result<()>
+    where
+        P: AsRef<Path>,
+        F: FnMut(&str),
+    {
         let file = File::open(archive_path)?;
         let mut archive = ZipArchive::new(BufReader::new(file))?;
-        let mut contents = Vec::new();
 
         for i in 0..archive.len() {
             let file = archive.by_index(i)?;
-            contents.push(file.name().to_string());
+            callback(file.name());
         }
 
-        Ok(contents)
+        Ok(())
     }
 
     fn add_file_to_zip(
