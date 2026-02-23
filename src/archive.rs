@@ -1,5 +1,5 @@
 use anyhow::Result;
-use indicatif::{ProgressBar, ProgressStyle};
+use indicatif::ProgressBar;
 use sha2::{Digest, Sha256};
 use std::fs::File;
 use std::io::{BufReader, Read};
@@ -50,25 +50,11 @@ impl ArchiveManager {
         println!("→ Validating: {}", archive_path.as_ref().display());
         let start = Instant::now();
         let total = archive.len() as u64;
-        let pb = if mode.progress && !mode.json {
-            let pb = ProgressBar::new(total);
-            pb.set_style(
-                ProgressStyle::default_bar()
-                    .template(
-                        "{spinner:.green} [{elapsed_precise}] {wide_bar:.cyan/blue} {pos:>5}/{len:<5} {percent:>3}% {eta_precise} | {msg}"
-                    )
-                    .unwrap()
-                    .progress_chars("█· "),
-            );
-            Some(pb)
-        } else {
-            if mode.json {
-                crate::progress::print_json(&serde_json::json!({
-                    "event":"start","op":"validate","archive": archive_path.as_ref().display().to_string(),"total": total
-                }));
-            }
-            None
-        };
+        let pb = crate::progress::create_progress_bar(total, || {
+            serde_json::json!({
+                "event":"start","op":"validate","archive": archive_path.as_ref().display().to_string(),"total": total
+            })
+        });
 
         for i in 0..archive.len() {
             let file = archive.by_index(i)?;
@@ -188,25 +174,11 @@ impl ArchiveManager {
         println!("→ Creating: {}", archive_path.as_ref().display());
         let start = Instant::now();
         let total = total_files as u64;
-        let pb = if mode.progress && !mode.json {
-            let pb = ProgressBar::new(total);
-            pb.set_style(
-                ProgressStyle::default_bar()
-                    .template(
-                        "{spinner:.green} [{elapsed_precise}] {wide_bar:.cyan/blue} {pos:>5}/{len:<5} {percent:>3}% {eta_precise} | {msg}"
-                    )
-                    .unwrap()
-                    .progress_chars("█· "),
-            );
-            Some(pb)
-        } else {
-            if mode.json {
-                crate::progress::print_json(&serde_json::json!({
-                    "event":"start","op":"create","archive": archive_path.as_ref().display().to_string(),"total": total
-                }));
-            }
-            None
-        };
+        let pb = crate::progress::create_progress_bar(total, || {
+            serde_json::json!({
+                "event":"start","op":"create","archive": archive_path.as_ref().display().to_string(),"total": total
+            })
+        });
 
         let mut processed: u64 = 0;
         for file_path in files {
@@ -271,26 +243,12 @@ impl ArchiveManager {
         );
         let start = Instant::now();
         let total = archive.len() as u64;
-        let pb = if mode.progress && !mode.json {
-            let pb = ProgressBar::new(total);
-            pb.set_style(
-                ProgressStyle::default_bar()
-                    .template(
-                        "{spinner:.green} [{elapsed_precise}] {wide_bar:.cyan/blue} {pos:>5}/{len:<5} {percent:>3}% {eta_precise} | {msg}"
-                    )
-                    .unwrap()
-                    .progress_chars("█· "),
-            );
-            Some(pb)
-        } else {
-            if mode.json {
-                crate::progress::print_json(&serde_json::json!({
-                    "event":"start","op":"extract","archive": archive_path.as_ref().display().to_string(),
-                    "total": total, "output": output_dir.as_ref().display().to_string()
-                }));
-            }
-            None
-        };
+        let pb = crate::progress::create_progress_bar(total, || {
+            serde_json::json!({
+                "event":"start","op":"extract","archive": archive_path.as_ref().display().to_string(),
+                "total": total, "output": output_dir.as_ref().display().to_string()
+            })
+        });
 
         for i in 0..archive.len() {
             let mut file = archive.by_index(i)?;
