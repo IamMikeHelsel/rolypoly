@@ -2,8 +2,8 @@ use crate::archive::ArchiveManager;
 use crate::state::{AppEvent, AppStateManager, Operation, OperationResult};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use tokio::sync::Semaphore;
 
 pub struct OperationManager {
@@ -208,9 +208,7 @@ impl OperationManager {
             })
             .await?;
 
-        result
-            .map(OperationResult::ArchiveValidated)
-            .map_err(|e| e.to_string())
+        result.map(OperationResult::ArchiveValidated).map_err(|e| e.to_string())
     }
 
     async fn calculate_hash_with_progress(&self, file: PathBuf) -> Result<OperationResult, String> {
@@ -244,9 +242,7 @@ impl OperationManager {
             })
             .await?;
 
-        result
-            .map(OperationResult::HashCalculated)
-            .map_err(|e| e.to_string())
+        result.map(OperationResult::HashCalculated).map_err(|e| e.to_string())
     }
 
     pub async fn cancel_all_operations(&self) {
@@ -323,7 +319,8 @@ mod tests {
         let op_manager_clone = op_manager.clone();
 
         // Spawn operation in a separate task
-        let handle = tokio::spawn(async move { op_manager_clone.execute_operation(operation).await });
+        let handle =
+            tokio::spawn(async move { op_manager_clone.execute_operation(operation).await });
 
         // Wait a bit to let the operation start
         tokio::time::sleep(std::time::Duration::from_millis(50)).await;
@@ -342,7 +339,11 @@ mod tests {
             Ok(_) => panic!("Operation completed successfully but should have been cancelled"),
             Err(e) => {
                 // Expected error message should indicate cancellation
-                assert!(e.contains("cancelled") || e.contains("Cancelled"), "Error message was: {}", e);
+                assert!(
+                    e.contains("cancelled") || e.contains("Cancelled"),
+                    "Error message was: {}",
+                    e
+                );
             }
         }
     }
