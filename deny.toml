@@ -1,7 +1,3 @@
-deny = ["unlicensed"]
-allow = []
-skip = []
-
 [bans]
 multiple-versions = "warn"
 wildcards = "deny"
