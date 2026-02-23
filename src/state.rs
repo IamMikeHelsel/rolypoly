@@ -192,7 +192,11 @@ mod tests {
 
         // 2. Empty -> ArchiveLoaded
         state_manager.set_state(AppState::Empty);
-        assert!(state_manager.transition_to(AppState::ArchiveLoaded(archive_path.clone())).is_ok());
+        assert!(
+            state_manager
+                .transition_to(AppState::ArchiveLoaded(archive_path.clone()))
+                .is_ok()
+        );
 
         // 3. FilesSelected -> Processing
         state_manager.set_state(AppState::FilesSelected(files.clone()));
@@ -212,7 +216,11 @@ mod tests {
 
         // 7. Processing -> ArchiveLoaded
         state_manager.set_state(AppState::Processing(operation.clone()));
-        assert!(state_manager.transition_to(AppState::ArchiveLoaded(archive_path.clone())).is_ok());
+        assert!(
+            state_manager
+                .transition_to(AppState::ArchiveLoaded(archive_path.clone()))
+                .is_ok()
+        );
 
         // 8. Processing -> Error
         state_manager.set_state(AppState::Processing(operation.clone()));
@@ -228,7 +236,11 @@ mod tests {
 
         // 11. Error -> ArchiveLoaded
         state_manager.set_state(AppState::Error(error_msg.clone()));
-        assert!(state_manager.transition_to(AppState::ArchiveLoaded(archive_path.clone())).is_ok());
+        assert!(
+            state_manager
+                .transition_to(AppState::ArchiveLoaded(archive_path.clone()))
+                .is_ok()
+        );
     }
 
     #[test]
@@ -257,7 +269,11 @@ mod tests {
 
         // 4. FilesSelected -> ArchiveLoaded
         state_manager.set_state(AppState::FilesSelected(files.clone()));
-        assert!(state_manager.transition_to(AppState::ArchiveLoaded(archive_path.clone())).is_err());
+        assert!(
+            state_manager
+                .transition_to(AppState::ArchiveLoaded(archive_path.clone()))
+                .is_err()
+        );
 
         // 5. FilesSelected -> Error
         state_manager.set_state(AppState::FilesSelected(files.clone()));
