@@ -34,8 +34,18 @@ pub struct ArchiveManager {
     opts: ArchiveOptions,
 }
 
+impl Default for ArchiveManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ArchiveManager {
-    pub fn new() -> Self { Self { opts: ArchiveOptions::default() } }
+    pub fn new() -> Self {
+        Self {
+            opts: ArchiveOptions::default(),
+        }
+    }
 
     pub fn with_options(opts: ArchiveOptions) -> Self {
         Self { opts }
@@ -229,7 +239,7 @@ impl ArchiveManager {
                 } else {
                     zip::CompressionMethod::Deflated
                 };
-                let mut options = base_options.clone().compression_method(method);
+                let mut options = base_options.compression_method(method);
                 if let Some(level) = self.opts.compression_level {
                     options = options.compression_level(Some(level as i64));
                 }
@@ -238,9 +248,20 @@ impl ArchiveManager {
                     pb.inc(1);
                 }
             } else if path.is_dir() {
-                let mut options = base_options.clone().compression_method(zip::CompressionMethod::Deflated);
-                if let Some(level) = self.opts.compression_level { options = options.compression_level(Some(level as i64)); }
-                self.add_dir_to_zip_with_progress(&mut zip, path, &options, &pb, mode.json, total, &mut processed, self.opts.clone())?;
+                let mut options = base_options.compression_method(zip::CompressionMethod::Deflated);
+                if let Some(level) = self.opts.compression_level {
+                    options = options.compression_level(Some(level as i64));
+                }
+                self.add_dir_to_zip_with_progress(
+                    &mut zip,
+                    path,
+                    &options,
+                    &pb,
+                    mode.json,
+                    total,
+                    &mut processed,
+                    &self.opts,
+                )?;
             }
         }
 
@@ -367,6 +388,7 @@ impl ArchiveManager {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn add_dir_to_zip_with_progress(
         &self,
         zip: &mut ZipWriter<File>,
@@ -376,7 +398,7 @@ impl ArchiveManager {
         json: bool,
         total: u64,
         processed: &mut u64,
-        opts: ArchiveOptions,
+        opts: &ArchiveOptions,
     ) -> Result<()> {
         let walkdir = WalkDir::new(dir_path);
         let it = walkdir.into_iter();
@@ -405,8 +427,10 @@ impl ArchiveManager {
                 } else {
                     zip::CompressionMethod::Deflated
                 };
-                let mut per_file = options.clone().compression_method(method);
-                if let Some(level) = opts.compression_level { per_file = per_file.compression_level(Some(level as i64)); }
+                let mut per_file = options.compression_method(method);
+                if let Some(level) = opts.compression_level {
+                    per_file = per_file.compression_level(Some(level as i64));
+                }
                 zip.start_file(&archive_path, per_file)?;
                 let mut file = File::open(path)?;
                 copy_buffered(&mut file, zip, opts.io_buffer_size)?;
