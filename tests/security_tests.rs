@@ -36,7 +36,10 @@ fn test_zip_slip_vulnerability() -> anyhow::Result<()> {
     // If the vulnerability exists, the file will be created at `evil_path` (outside `extract_dir`).
     if evil_path.exists() {
         // Fail the test if the file was created outside
-        panic!("SECURITY VULNERABILITY: File created outside extraction directory at {}", evil_path.display());
+        panic!(
+            "SECURITY VULNERABILITY: File created outside extraction directory at {}",
+            evil_path.display()
+        );
     }
 
     // We also expect the extraction to return an error for invalid paths,
