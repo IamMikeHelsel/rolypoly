@@ -10,7 +10,7 @@ This is "rolypoly" - a Rust-based compression utility similar to WinZip. The pro
 
 The repository contains:
 
-- Rust project structure with src/main.rs
+- Rust project structure
 - Cargo.toml with dependencies for ZIP functionality and CLI
 - Core dependencies: zip, clap, anyhow, walkdir
 - Test dependencies: tempfile
