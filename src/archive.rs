@@ -294,7 +294,21 @@ impl ArchiveManager {
 
         for i in 0..archive.len() {
             let mut file = archive.by_index(i)?;
-            let output_path = output_dir.as_ref().join(file.name());
+            // Use enclosed_name to prevent path traversal attacks
+            let path = match file.enclosed_name() {
+                Some(p) => p,
+                None => {
+                    if mode.json {
+                        crate::progress::print_json(&serde_json::json!({
+                            "event":"warning","op":"extract","message": format!("Skipping insecure path: {}", file.name())
+                        }));
+                    } else {
+                        eprintln!("Warning: Skipping insecure path: {}", file.name());
+                    }
+                    continue;
+                }
+            };
+            let output_path = output_dir.as_ref().join(path);
             if let Some(pb) = &pb {
                 pb.set_message(format!("Extracting: {}", file.name()));
             }
