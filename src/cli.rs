@@ -77,12 +77,10 @@ impl Cli {
         let progress = if self.json { self.progress } else { true };
         progress::set_output_mode(self.json, progress);
 
-        let opts = ArchiveOptions {
-            compression_level: self.level,
-            auto_store: self.auto_store,
-            store_entropy_threshold: self.store_entropy_threshold,
-            ..Default::default()
-        };
+        let mut opts = ArchiveOptions::default();
+        opts.compression_level = self.level;
+        opts.auto_store = self.auto_store;
+        opts.store_entropy_threshold = self.store_entropy_threshold;
         let manager = ArchiveManager::with_options(opts);
 
         match self.command {
