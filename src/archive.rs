@@ -261,8 +261,7 @@ impl ArchiveManager {
                     pb.inc(1);
                 }
             } else if path.is_dir() {
-                let mut options =
-                    base_options.compression_method(zip::CompressionMethod::Deflated);
+                let mut options = base_options.compression_method(zip::CompressionMethod::Deflated);
                 if let Some(level) = self.opts.compression_level {
                     options = options.compression_level(Some(level as i64));
                 }
