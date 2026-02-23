@@ -34,6 +34,12 @@ pub struct ArchiveManager {
     opts: ArchiveOptions,
 }
 
+impl Default for ArchiveManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ArchiveManager {
     pub fn new() -> Self {
         Self {
@@ -289,7 +295,7 @@ impl ArchiveManager {
                 } else {
                     zip::CompressionMethod::Deflated
                 };
-                let mut options = base_options.clone().compression_method(method);
+                let mut options = base_options.compression_method(method);
                 if let Some(level) = self.opts.compression_level {
                     options = options.compression_level(Some(level as i64));
                 }
@@ -298,22 +304,18 @@ impl ArchiveManager {
                     pb.inc(1);
                 }
             } else if path.is_dir() {
-                let mut options =
-                    base_options.clone().compression_method(zip::CompressionMethod::Deflated);
+                let mut options = base_options.compression_method(zip::CompressionMethod::Deflated);
                 if let Some(level) = self.opts.compression_level {
                     options = options.compression_level(Some(level as i64));
                 }
-                self.add_dir_to_zip_with_progress(
-                    &mut zip,
-                    path,
-                    &options,
-                    &pb,
-                    mode.json,
+                let mut ctx = ProgressContext {
+                    pb: &pb,
+                    json: mode.json,
                     total,
-                    &mut processed,
-                    self.opts.clone(),
-                    &callback,
-                )?;
+                    processed,
+                };
+                self.add_dir_to_zip_with_progress(&mut zip, path, &options, &mut ctx, &callback)?;
+                processed = ctx.processed;
             }
         }
 
@@ -455,11 +457,7 @@ impl ArchiveManager {
         zip: &mut ZipWriter<File>,
         dir_path: &Path,
         options: &SimpleFileOptions,
-        pb: &Option<ProgressBar>,
-        json: bool,
-        total: u64,
-        processed: &mut u64,
-        opts: ArchiveOptions,
+        ctx: &mut ProgressContext,
         callback: &F,
     ) -> Result<()>
     where
@@ -484,36 +482,37 @@ impl ArchiveManager {
             };
 
             if path.is_file() {
-                if let Some(pb) = pb {
+                if let Some(pb) = ctx.pb {
                     pb.set_message(format!("Adding: {}", path.display()));
                 }
-                let method =
-                    if opts.auto_store && is_incompressible(path, opts.store_entropy_threshold)? {
-                        zip::CompressionMethod::Stored
-                    } else {
-                        zip::CompressionMethod::Deflated
-                    };
-                let mut per_file = options.clone().compression_method(method);
-                if let Some(level) = opts.compression_level {
+                let method = if self.opts.auto_store
+                    && is_incompressible(path, self.opts.store_entropy_threshold)?
+                {
+                    zip::CompressionMethod::Stored
+                } else {
+                    zip::CompressionMethod::Deflated
+                };
+                let mut per_file = (*options).compression_method(method);
+                if let Some(level) = self.opts.compression_level {
                     per_file = per_file.compression_level(Some(level as i64));
                 }
                 zip.start_file(&archive_path, per_file)?;
                 let mut file = File::open(path)?;
-                copy_buffered(&mut file, zip, opts.io_buffer_size)?;
-                if let Some(pb) = pb {
+                copy_buffered(&mut file, zip, self.opts.io_buffer_size)?;
+                if let Some(pb) = ctx.pb {
                     pb.inc(1);
                 }
-                *processed += 1;
-                let pct = if total > 0 {
-                    (*processed as f64) / (total as f64)
+                ctx.processed += 1;
+                let pct = if ctx.total > 0 {
+                    (ctx.processed as f64) / (ctx.total as f64)
                 } else {
                     0.0
                 };
                 callback(pct);
-                if json {
+                if ctx.json {
                     crate::progress::print_json(&serde_json::json!({
                         "event":"progress","op":"create","file": path.display().to_string(),
-                        "current": *processed, "total": total, "pct": pct
+                        "current": ctx.processed, "total": ctx.total, "pct": pct
                     }));
                 }
             } else if path.is_dir() && !relative_path.is_empty() {
@@ -523,6 +522,13 @@ impl ArchiveManager {
 
         Ok(())
     }
+}
+
+struct ProgressContext<'a> {
+    pb: &'a Option<ProgressBar>,
+    json: bool,
+    total: u64,
+    processed: u64,
 }
 
 fn copy_buffered<R: std::io::Read, W: std::io::Write>(
