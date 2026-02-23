@@ -70,19 +70,10 @@ impl OperationManager {
 
         // Run in blocking task to avoid blocking the async runtime
         let result = tokio::task::spawn_blocking(move || {
-            // Simulate progress updates
-            for i in 0..=100 {
-                let progress = i as f64 / 100.0;
-                state_manager.emit_event(AppEvent::OperationProgress(operation.clone(), progress));
-
-                if i < 100 {
-                    std::thread::sleep(std::time::Duration::from_millis(10));
-                }
-            }
-
-            // Perform actual archive creation
             let file_refs: Vec<&PathBuf> = files.iter().collect();
-            archive_manager.create_archive(&output, &file_refs)
+            archive_manager.create_archive_with_callback(&output, &file_refs, |progress| {
+                state_manager.emit_event(AppEvent::OperationProgress(operation.clone(), progress));
+            })
         })
         .await
         .map_err(|e| e.to_string())?;
@@ -106,18 +97,9 @@ impl OperationManager {
         let output_clone = output.clone();
 
         let result = tokio::task::spawn_blocking(move || {
-            // Simulate progress updates
-            for i in 0..=100 {
-                let progress = i as f64 / 100.0;
+            archive_manager.extract_archive_with_callback(&archive, &output, |progress| {
                 state_manager.emit_event(AppEvent::OperationProgress(operation.clone(), progress));
-
-                if i < 100 {
-                    std::thread::sleep(std::time::Duration::from_millis(10));
-                }
-            }
-
-            // Perform actual extraction
-            archive_manager.extract_archive(&archive, &output)
+            })
         })
         .await
         .map_err(|e| e.to_string())?;
@@ -138,18 +120,9 @@ impl OperationManager {
         };
 
         let result = tokio::task::spawn_blocking(move || {
-            // Simulate progress updates
-            for i in 0..=100 {
-                let progress = i as f64 / 100.0;
+            archive_manager.validate_archive_with_callback(&archive, |progress| {
                 state_manager.emit_event(AppEvent::OperationProgress(operation.clone(), progress));
-
-                if i < 100 {
-                    std::thread::sleep(std::time::Duration::from_millis(5));
-                }
-            }
-
-            // Perform actual validation
-            archive_manager.validate_archive(&archive)
+            })
         })
         .await
         .map_err(|e| e.to_string())?;
@@ -163,18 +136,9 @@ impl OperationManager {
         let operation = Operation::CalculateHash { file: file.clone() };
 
         let result = tokio::task::spawn_blocking(move || {
-            // Simulate progress updates
-            for i in 0..=100 {
-                let progress = i as f64 / 100.0;
+            archive_manager.calculate_file_hash_with_callback(&file, |progress| {
                 state_manager.emit_event(AppEvent::OperationProgress(operation.clone(), progress));
-
-                if i < 100 {
-                    std::thread::sleep(std::time::Duration::from_millis(2));
-                }
-            }
-
-            // Perform actual hash calculation
-            archive_manager.calculate_file_hash(&file)
+            })
         })
         .await
         .map_err(|e| e.to_string())?;
