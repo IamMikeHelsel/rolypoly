@@ -173,4 +173,126 @@ mod tests {
             panic!("No event received");
         }
     }
+
+    #[test]
+    fn test_comprehensive_state_transitions() {
+        let state_manager = AppStateManager::new();
+        let files = vec![PathBuf::from("test.txt")];
+        let archive_path = PathBuf::from("test.zip");
+        let output_path = PathBuf::from("output");
+        let operation = Operation::CreateArchive {
+            output: output_path.clone(),
+            files: files.clone(),
+        };
+        let error_msg = "Test Error".to_string();
+
+        // 1. Empty -> FilesSelected
+        state_manager.set_state(AppState::Empty);
+        assert!(state_manager.transition_to(AppState::FilesSelected(files.clone())).is_ok());
+
+        // 2. Empty -> ArchiveLoaded
+        state_manager.set_state(AppState::Empty);
+        assert!(
+            state_manager
+                .transition_to(AppState::ArchiveLoaded(archive_path.clone()))
+                .is_ok()
+        );
+
+        // 3. FilesSelected -> Processing
+        state_manager.set_state(AppState::FilesSelected(files.clone()));
+        assert!(state_manager.transition_to(AppState::Processing(operation.clone())).is_ok());
+
+        // 4. ArchiveLoaded -> Processing
+        state_manager.set_state(AppState::ArchiveLoaded(archive_path.clone()));
+        assert!(state_manager.transition_to(AppState::Processing(operation.clone())).is_ok());
+
+        // 5. Processing -> Empty
+        state_manager.set_state(AppState::Processing(operation.clone()));
+        assert!(state_manager.transition_to(AppState::Empty).is_ok());
+
+        // 6. Processing -> FilesSelected
+        state_manager.set_state(AppState::Processing(operation.clone()));
+        assert!(state_manager.transition_to(AppState::FilesSelected(files.clone())).is_ok());
+
+        // 7. Processing -> ArchiveLoaded
+        state_manager.set_state(AppState::Processing(operation.clone()));
+        assert!(
+            state_manager
+                .transition_to(AppState::ArchiveLoaded(archive_path.clone()))
+                .is_ok()
+        );
+
+        // 8. Processing -> Error
+        state_manager.set_state(AppState::Processing(operation.clone()));
+        assert!(state_manager.transition_to(AppState::Error(error_msg.clone())).is_ok());
+
+        // 9. Error -> Empty
+        state_manager.set_state(AppState::Error(error_msg.clone()));
+        assert!(state_manager.transition_to(AppState::Empty).is_ok());
+
+        // 10. Error -> FilesSelected
+        state_manager.set_state(AppState::Error(error_msg.clone()));
+        assert!(state_manager.transition_to(AppState::FilesSelected(files.clone())).is_ok());
+
+        // 11. Error -> ArchiveLoaded
+        state_manager.set_state(AppState::Error(error_msg.clone()));
+        assert!(
+            state_manager
+                .transition_to(AppState::ArchiveLoaded(archive_path.clone()))
+                .is_ok()
+        );
+    }
+
+    #[test]
+    fn test_comprehensive_invalid_transitions() {
+        let state_manager = AppStateManager::new();
+        let files = vec![PathBuf::from("test.txt")];
+        let archive_path = PathBuf::from("test.zip");
+        let output_path = PathBuf::from("output");
+        let operation = Operation::CreateArchive {
+            output: output_path.clone(),
+            files: files.clone(),
+        };
+        let error_msg = "Test Error".to_string();
+
+        // 1. Empty -> Processing
+        state_manager.set_state(AppState::Empty);
+        assert!(state_manager.transition_to(AppState::Processing(operation.clone())).is_err());
+
+        // 2. Empty -> Error
+        state_manager.set_state(AppState::Empty);
+        assert!(state_manager.transition_to(AppState::Error(error_msg.clone())).is_err());
+
+        // 3. FilesSelected -> Empty
+        state_manager.set_state(AppState::FilesSelected(files.clone()));
+        assert!(state_manager.transition_to(AppState::Empty).is_err());
+
+        // 4. FilesSelected -> ArchiveLoaded
+        state_manager.set_state(AppState::FilesSelected(files.clone()));
+        assert!(
+            state_manager
+                .transition_to(AppState::ArchiveLoaded(archive_path.clone()))
+                .is_err()
+        );
+
+        // 5. FilesSelected -> Error
+        state_manager.set_state(AppState::FilesSelected(files.clone()));
+        assert!(state_manager.transition_to(AppState::Error(error_msg.clone())).is_err());
+
+        // 6. ArchiveLoaded -> Empty
+        state_manager.set_state(AppState::ArchiveLoaded(archive_path.clone()));
+        assert!(state_manager.transition_to(AppState::Empty).is_err());
+
+        // 7. ArchiveLoaded -> FilesSelected
+        state_manager.set_state(AppState::ArchiveLoaded(archive_path.clone()));
+        assert!(state_manager.transition_to(AppState::FilesSelected(files.clone())).is_err());
+
+        // 8. ArchiveLoaded -> Error
+        state_manager.set_state(AppState::ArchiveLoaded(archive_path.clone()));
+        assert!(state_manager.transition_to(AppState::Error(error_msg.clone())).is_err());
+
+        // 9. Error -> Processing
+        state_manager.set_state(AppState::Error(error_msg.clone()));
+        assert!(state_manager.transition_to(AppState::Processing(operation.clone())).is_err());
+    }
 }
