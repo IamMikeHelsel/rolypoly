@@ -111,6 +111,7 @@ fn benchmark_rolypoly_create(
     let mut cmd = Command::new("./target/release/rolypoly");
     cmd.arg("create").arg(archive_path);
     if let Ok(level) = env::var("RP_LEVEL") {
+        #[allow(clippy::collapsible_if)]
         if !level.is_empty() {
             cmd.arg("--level").arg(level);
         }
