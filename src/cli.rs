@@ -3,7 +3,6 @@ use crate::archive::ArchiveOptions;
 use crate::progress;
 use anyhow::Result;
 use clap::{ArgAction, Parser, Subcommand};
-use serde::Serialize;
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -77,10 +76,12 @@ impl Cli {
         let progress = if self.json { self.progress } else { true };
         progress::set_output_mode(self.json, progress);
 
-        let mut opts = ArchiveOptions::default();
-        opts.compression_level = self.level;
-        opts.auto_store = self.auto_store;
-        opts.store_entropy_threshold = self.store_entropy_threshold;
+        let opts = ArchiveOptions {
+            compression_level: self.level,
+            auto_store: self.auto_store,
+            store_entropy_threshold: self.store_entropy_threshold,
+            ..Default::default()
+        };
         let manager = ArchiveManager::with_options(opts);
 
         match self.command {
@@ -91,17 +92,12 @@ impl Cli {
                 let file_refs: Vec<&PathBuf> = files.iter().collect();
                 manager.create_archive(&archive, &file_refs)?;
                 if self.json {
-                    #[derive(Serialize)]
-                    struct Out<'a> {
-                        event: &'a str,
-                        archive: String,
-                    }
                     println!(
                         "{}",
-                        serde_json::to_string(&Out {
-                            event: "created",
-                            archive: archive.display().to_string()
-                        })?
+                        serde_json::json!({
+                            "event": "created",
+                            "archive": archive.display().to_string()
+                        })
                     );
                 }
                 // Otherwise progress and completion messages are handled by the archiver
@@ -109,19 +105,13 @@ impl Cli {
             Commands::Extract { archive, output } => {
                 manager.extract_archive(&archive, &output)?;
                 if self.json {
-                    #[derive(Serialize)]
-                    struct Out<'a> {
-                        event: &'a str,
-                        archive: String,
-                        output: String,
-                    }
                     println!(
                         "{}",
-                        serde_json::to_string(&Out {
-                            event: "extracted",
-                            archive: archive.display().to_string(),
-                            output: output.display().to_string()
-                        })?
+                        serde_json::json!({
+                            "event": "extracted",
+                            "archive": archive.display().to_string(),
+                            "output": output.display().to_string()
+                        })
                     );
                 }
                 // Otherwise progress and completion messages are handled by the archiver
@@ -129,17 +119,12 @@ impl Cli {
             Commands::List { archive } => {
                 let contents = manager.list_archive(&archive)?;
                 if self.json {
-                    #[derive(Serialize)]
-                    struct Out {
-                        archive: String,
-                        files: Vec<String>,
-                    }
                     println!(
                         "{}",
-                        serde_json::to_string(&Out {
-                            archive: archive.display().to_string(),
-                            files: contents
-                        })?
+                        serde_json::json!({
+                            "archive": archive.display().to_string(),
+                            "files": contents
+                        })
                     );
                 } else {
                     println!("Archive: {}", archive.display());
@@ -155,17 +140,12 @@ impl Cli {
             Commands::Validate { archive } => {
                 let is_valid = manager.validate_archive(&archive)?;
                 if self.json {
-                    #[derive(Serialize)]
-                    struct Out {
-                        archive: String,
-                        valid: bool,
-                    }
                     println!(
                         "{}",
-                        serde_json::to_string(&Out {
-                            archive: archive.display().to_string(),
-                            valid: is_valid
-                        })?
+                        serde_json::json!({
+                            "archive": archive.display().to_string(),
+                            "valid": is_valid
+                        })
                     );
                 } else if is_valid {
                     println!("✓ Archive is valid and all files passed integrity checks");
@@ -202,19 +182,13 @@ impl Cli {
             Commands::Hash { file } => {
                 let hash = manager.calculate_file_hash(&file)?;
                 if self.json {
-                    #[derive(Serialize)]
-                    struct Out {
-                        file: String,
-                        algo: &'static str,
-                        hash: String,
-                    }
                     println!(
                         "{}",
-                        serde_json::to_string(&Out {
-                            file: file.display().to_string(),
-                            algo: "sha256",
-                            hash
-                        })?
+                        serde_json::json!({
+                            "file": file.display().to_string(),
+                            "algo": "sha256",
+                            "hash": hash
+                        })
                     );
                 } else {
                     println!("SHA256: {hash}");
