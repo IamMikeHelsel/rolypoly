@@ -1,10 +1,10 @@
-use std::process::Command;
 use std::fs;
+use std::process::Command;
 use tempfile::TempDir;
 
 fn run_command(args: &[&str]) -> String {
     let output = Command::new("cargo")
-        .args(&["run", "--quiet", "--"])
+        .args(["run", "--quiet", "--"])
         .args(args)
         .output()
         .expect("Failed to execute command");
@@ -29,15 +29,11 @@ fn test_json_output() {
     fs::write(&test_file, "Hello, World!").expect("Failed to write test file");
 
     // Test Create
-    let args = [
-        "create",
-        archive_path.to_str().unwrap(),
-        test_file.to_str().unwrap(),
-        "--json"
-    ];
+    let args = ["create", archive_path.to_str().unwrap(), test_file.to_str().unwrap(), "--json"];
     let output = run_command(&args);
     let lines: Vec<&str> = output.trim().split('\n').collect();
-    let created_line = lines.iter()
+    let created_line = lines
+        .iter()
         .find(|line| line.contains(r#""event":"created""#))
         .expect("Failed to find created event");
 
@@ -50,7 +46,8 @@ fn test_json_output() {
     let output = run_command(&args);
     // Find line with "files"
     let lines: Vec<&str> = output.trim().split('\n').collect();
-    let list_line = lines.iter()
+    let list_line = lines
+        .iter()
         .find(|line| line.contains(r#""files":["#))
         .expect("Failed to find list output");
 
@@ -63,7 +60,8 @@ fn test_json_output() {
     let args = ["validate", archive_path.to_str().unwrap(), "--json"];
     let output = run_command(&args);
     let lines: Vec<&str> = output.trim().split('\n').collect();
-    let valid_line = lines.iter()
+    let valid_line = lines
+        .iter()
         .find(|line| line.contains(r#""valid":true"#))
         .expect("Failed to find validate result");
 
@@ -76,15 +74,17 @@ fn test_json_output() {
         archive_path.to_str().unwrap(),
         "--output",
         extract_dir.to_str().unwrap(),
-        "--json"
+        "--json",
     ];
     let output = run_command(&args);
     let lines: Vec<&str> = output.trim().split('\n').collect();
-    let extracted_line = lines.iter()
+    let extracted_line = lines
+        .iter()
         .find(|line| line.contains(r#""event":"extracted""#))
         .expect("Failed to find extracted event");
 
-    let json: serde_json::Value = serde_json::from_str(extracted_line).expect("Failed to parse JSON");
+    let json: serde_json::Value =
+        serde_json::from_str(extracted_line).expect("Failed to parse JSON");
     assert_eq!(json["event"], "extracted");
     assert!(json["output"].as_str().unwrap().contains("extract"));
 
@@ -92,7 +92,8 @@ fn test_json_output() {
     let args = ["hash", test_file.to_str().unwrap(), "--json"];
     let output = run_command(&args);
     let lines: Vec<&str> = output.trim().split('\n').collect();
-    let hash_line = lines.iter()
+    let hash_line = lines
+        .iter()
         .find(|line| line.contains(r#""hash":""#))
         .expect("Failed to find hash result");
 
