@@ -77,10 +77,12 @@ impl Cli {
         let progress = if self.json { self.progress } else { true };
         progress::set_output_mode(self.json, progress);
 
-        let mut opts = ArchiveOptions::default();
-        opts.compression_level = self.level;
-        opts.auto_store = self.auto_store;
-        opts.store_entropy_threshold = self.store_entropy_threshold;
+        let opts = ArchiveOptions {
+            compression_level: self.level,
+            auto_store: self.auto_store,
+            store_entropy_threshold: self.store_entropy_threshold,
+            ..Default::default()
+        };
         let manager = ArchiveManager::with_options(opts);
 
         match self.command {
@@ -127,8 +129,8 @@ impl Cli {
                 // Otherwise progress and completion messages are handled by the archiver
             }
             Commands::List { archive } => {
-                let contents = manager.list_archive(&archive)?;
                 if self.json {
+                    let contents = manager.list_archive(&archive)?;
                     #[derive(Serialize)]
                     struct Out {
                         archive: String,
@@ -143,12 +145,13 @@ impl Cli {
                     );
                 } else {
                     println!("Archive: {}", archive.display());
-                    if contents.is_empty() {
+                    let mut count = 0;
+                    manager.list_archive_with_callback(&archive, |item| {
+                        println!("  {item}");
+                        count += 1;
+                    })?;
+                    if count == 0 {
                         println!("Archive is empty");
-                    } else {
-                        for item in contents {
-                            println!("  {item}");
-                        }
                     }
                 }
             }
