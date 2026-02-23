@@ -235,4 +235,91 @@ mod tests {
             panic!("Expected HashCalculated result");
         }
     }
+
+    #[tokio::test]
+    async fn test_create_archive_success() {
+        let temp_dir = TempDir::new().unwrap();
+        let test_file = temp_dir.path().join("test.txt");
+        let archive_path = temp_dir.path().join("test.zip");
+        std::fs::write(&test_file, "Hello, World!").unwrap();
+
+        let archive_manager = Arc::new(ArchiveManager::new());
+        let state_manager = Arc::new(AppStateManager::new());
+        let op_manager = OperationManager::new(archive_manager, state_manager.clone());
+
+        let operation = Operation::CreateArchive {
+            output: archive_path.clone(),
+            files: vec![test_file.clone()],
+        };
+
+        let mut receiver = state_manager.subscribe();
+
+        let result = op_manager.execute_operation(operation.clone()).await;
+        assert!(result.is_ok());
+
+        if let Ok(OperationResult::ArchiveCreated(path)) = result {
+            assert_eq!(path, archive_path);
+        } else {
+            panic!("Expected ArchiveCreated result");
+        }
+
+        assert!(archive_path.exists());
+
+        // Check for events
+        let mut completed = false;
+        loop {
+            match receiver.try_recv() {
+                Ok(AppEvent::OperationCompleted(op, _)) if op == operation => {
+                    completed = true;
+                    break;
+                }
+                Ok(_) => continue,
+                Err(tokio::sync::broadcast::error::TryRecvError::Empty) => break,
+                Err(tokio::sync::broadcast::error::TryRecvError::Lagged(_)) => continue,
+                Err(tokio::sync::broadcast::error::TryRecvError::Closed) => break,
+            }
+        }
+        assert!(completed, "OperationCompleted event not received");
+    }
+
+    #[tokio::test]
+    async fn test_create_archive_failure() {
+        let temp_dir = TempDir::new().unwrap();
+        let test_file = temp_dir.path().join("test.txt");
+        // Use a directory as output path to force failure
+        let bad_output_path = temp_dir.path().join("bad_output");
+        std::fs::create_dir(&bad_output_path).unwrap();
+
+        std::fs::write(&test_file, "Hello, World!").unwrap();
+
+        let archive_manager = Arc::new(ArchiveManager::new());
+        let state_manager = Arc::new(AppStateManager::new());
+        let op_manager = OperationManager::new(archive_manager, state_manager.clone());
+
+        let operation = Operation::CreateArchive {
+            output: bad_output_path.clone(),
+            files: vec![test_file.clone()],
+        };
+
+        let mut receiver = state_manager.subscribe();
+
+        let result = op_manager.execute_operation(operation.clone()).await;
+        assert!(result.is_err());
+
+        // Check for events
+        let mut failed = false;
+        loop {
+            match receiver.try_recv() {
+                Ok(AppEvent::OperationFailed(op, _)) if op == operation => {
+                    failed = true;
+                    break;
+                }
+                Ok(_) => continue,
+                Err(tokio::sync::broadcast::error::TryRecvError::Empty) => break,
+                Err(tokio::sync::broadcast::error::TryRecvError::Lagged(_)) => continue,
+                Err(tokio::sync::broadcast::error::TryRecvError::Closed) => break,
+            }
+        }
+        assert!(failed, "OperationFailed event not received");
+    }
 }
