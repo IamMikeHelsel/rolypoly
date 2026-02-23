@@ -35,7 +35,11 @@ pub struct ArchiveManager {
 }
 
 impl ArchiveManager {
-    pub fn new() -> Self { Self { opts: ArchiveOptions::default() } }
+    pub fn new() -> Self {
+        Self {
+            opts: ArchiveOptions::default(),
+        }
+    }
 
     pub fn with_options(opts: ArchiveOptions) -> Self {
         Self { opts }
@@ -43,6 +47,15 @@ impl ArchiveManager {
 
     /// Validate the integrity of a ZIP archive
     pub fn validate_archive<P: AsRef<Path>>(&self, archive_path: P) -> Result<bool> {
+        self.validate_archive_with_callback(archive_path, |_| {})
+    }
+
+    /// Validate the integrity of a ZIP archive with progress callback
+    pub fn validate_archive_with_callback<P, F>(&self, archive_path: P, callback: F) -> Result<bool>
+    where
+        P: AsRef<Path>,
+        F: Fn(f64),
+    {
         let file = File::open(archive_path.as_ref())?;
         let mut archive = ZipArchive::new(BufReader::new(file))?;
 
@@ -75,10 +88,13 @@ impl ArchiveManager {
             if let Some(pb) = &pb {
                 pb.set_message(format!("Validating: {}", file.name()));
             }
+            let pct = (i + 1) as f64 / total as f64;
+            callback(pct);
+
             if mode.json {
                 crate::progress::print_json(&serde_json::json!({
                     "event":"progress","op":"validate","file": file.name(),
-                    "current": i + 1, "total": total, "pct": ((i+1) as f64 / total as f64)
+                    "current": i + 1, "total": total, "pct": pct
                 }));
             }
 
@@ -105,7 +121,23 @@ impl ArchiveManager {
 
     /// Calculate SHA256 hash of a file
     pub fn calculate_file_hash<P: AsRef<Path>>(&self, file_path: P) -> Result<String> {
+        self.calculate_file_hash_with_callback(file_path, |_| {})
+    }
+
+    /// Calculate SHA256 hash of a file with progress callback
+    pub fn calculate_file_hash_with_callback<P, F>(
+        &self,
+        file_path: P,
+        callback: F,
+    ) -> Result<String>
+    where
+        P: AsRef<Path>,
+        F: Fn(f64),
+    {
         let mut file = File::open(file_path)?;
+        let total_size = file.metadata()?.len();
+        let mut processed = 0u64;
+
         let mut hasher = Sha256::new();
         let mut buffer = [0; 8192];
 
@@ -115,7 +147,13 @@ impl ArchiveManager {
                 break;
             }
             hasher.update(&buffer[..bytes_read]);
+            processed += bytes_read as u64;
+
+            if total_size > 0 {
+                callback(processed as f64 / total_size as f64);
+            }
         }
+        callback(1.0); // Ensure 100% is reached
 
         Ok(format!("{:x}", hasher.finalize()))
     }
@@ -159,6 +197,20 @@ impl ArchiveManager {
 
     /// Create a new ZIP archive with the specified files
     pub fn create_archive<P: AsRef<Path>>(&self, archive_path: P, files: &[P]) -> Result<()> {
+        self.create_archive_with_callback(archive_path, files, |_| {})
+    }
+
+    /// Create a new ZIP archive with progress callback
+    pub fn create_archive_with_callback<P, F>(
+        &self,
+        archive_path: P,
+        files: &[P],
+        callback: F,
+    ) -> Result<()>
+    where
+        P: AsRef<Path>,
+        F: Fn(f64),
+    {
         let file = File::create(archive_path.as_ref())?;
         let mut zip = ZipWriter::new(file);
         let base_options = SimpleFileOptions::default();
@@ -216,15 +268,23 @@ impl ArchiveManager {
                     pb.set_message(format!("Adding: {}", path.display()));
                 }
                 processed += 1;
+                let pct = if total > 0 {
+                    (processed as f64) / (total as f64)
+                } else {
+                    0.0
+                };
+                callback(pct);
+
                 if mode.json {
-                    let pct = if total > 0 { (processed as f64) / (total as f64) } else { 0.0 };
                     crate::progress::print_json(&serde_json::json!({
                         "event":"progress","op":"create","file": path.display().to_string(),
                         "current": processed, "total": total, "pct": pct
                     }));
                 }
                 // Choose method per-file
-                let method = if self.opts.auto_store && is_incompressible(path, self.opts.store_entropy_threshold)? {
+                let method = if self.opts.auto_store
+                    && is_incompressible(path, self.opts.store_entropy_threshold)?
+                {
                     zip::CompressionMethod::Stored
                 } else {
                     zip::CompressionMethod::Deflated
@@ -238,9 +298,22 @@ impl ArchiveManager {
                     pb.inc(1);
                 }
             } else if path.is_dir() {
-                let mut options = base_options.clone().compression_method(zip::CompressionMethod::Deflated);
-                if let Some(level) = self.opts.compression_level { options = options.compression_level(Some(level as i64)); }
-                self.add_dir_to_zip_with_progress(&mut zip, path, &options, &pb, mode.json, total, &mut processed, self.opts.clone())?;
+                let mut options =
+                    base_options.clone().compression_method(zip::CompressionMethod::Deflated);
+                if let Some(level) = self.opts.compression_level {
+                    options = options.compression_level(Some(level as i64));
+                }
+                self.add_dir_to_zip_with_progress(
+                    &mut zip,
+                    path,
+                    &options,
+                    &pb,
+                    mode.json,
+                    total,
+                    &mut processed,
+                    self.opts.clone(),
+                    &callback,
+                )?;
             }
         }
 
@@ -260,6 +333,20 @@ impl ArchiveManager {
 
     /// Extract a ZIP archive to the specified directory
     pub fn extract_archive<P: AsRef<Path>>(&self, archive_path: P, output_dir: P) -> Result<()> {
+        self.extract_archive_with_callback(archive_path, output_dir, |_| {})
+    }
+
+    /// Extract a ZIP archive with progress callback
+    pub fn extract_archive_with_callback<P, F>(
+        &self,
+        archive_path: P,
+        output_dir: P,
+        callback: F,
+    ) -> Result<()>
+    where
+        P: AsRef<Path>,
+        F: Fn(f64),
+    {
         let file = File::open(archive_path.as_ref())?;
         let mut archive = ZipArchive::new(BufReader::new(file))?;
 
@@ -298,10 +385,13 @@ impl ArchiveManager {
             if let Some(pb) = &pb {
                 pb.set_message(format!("Extracting: {}", file.name()));
             }
+            let pct = (i + 1) as f64 / total as f64;
+            callback(pct);
+
             if mode.json {
                 crate::progress::print_json(&serde_json::json!({
                     "event":"progress","op":"extract","file": file.name(),
-                    "current": i + 1, "total": total, "pct": ((i+1) as f64 / total as f64)
+                    "current": i + 1, "total": total, "pct": pct
                 }));
             }
 
@@ -360,7 +450,7 @@ impl ArchiveManager {
         Ok(())
     }
 
-    fn add_dir_to_zip_with_progress(
+    fn add_dir_to_zip_with_progress<F>(
         &self,
         zip: &mut ZipWriter<File>,
         dir_path: &Path,
@@ -370,7 +460,11 @@ impl ArchiveManager {
         total: u64,
         processed: &mut u64,
         opts: ArchiveOptions,
-    ) -> Result<()> {
+        callback: &F,
+    ) -> Result<()>
+    where
+        F: Fn(f64),
+    {
         let walkdir = WalkDir::new(dir_path);
         let it = walkdir.into_iter();
 
@@ -393,13 +487,16 @@ impl ArchiveManager {
                 if let Some(pb) = pb {
                     pb.set_message(format!("Adding: {}", path.display()));
                 }
-                let method = if opts.auto_store && is_incompressible(path, opts.store_entropy_threshold)? {
-                    zip::CompressionMethod::Stored
-                } else {
-                    zip::CompressionMethod::Deflated
-                };
+                let method =
+                    if opts.auto_store && is_incompressible(path, opts.store_entropy_threshold)? {
+                        zip::CompressionMethod::Stored
+                    } else {
+                        zip::CompressionMethod::Deflated
+                    };
                 let mut per_file = options.clone().compression_method(method);
-                if let Some(level) = opts.compression_level { per_file = per_file.compression_level(Some(level as i64)); }
+                if let Some(level) = opts.compression_level {
+                    per_file = per_file.compression_level(Some(level as i64));
+                }
                 zip.start_file(&archive_path, per_file)?;
                 let mut file = File::open(path)?;
                 copy_buffered(&mut file, zip, opts.io_buffer_size)?;
@@ -407,8 +504,13 @@ impl ArchiveManager {
                     pb.inc(1);
                 }
                 *processed += 1;
+                let pct = if total > 0 {
+                    (*processed as f64) / (total as f64)
+                } else {
+                    0.0
+                };
+                callback(pct);
                 if json {
-                    let pct = if total > 0 { (*processed as f64) / (total as f64) } else { 0.0 };
                     crate::progress::print_json(&serde_json::json!({
                         "event":"progress","op":"create","file": path.display().to_string(),
                         "current": *processed, "total": total, "pct": pct
@@ -423,12 +525,18 @@ impl ArchiveManager {
     }
 }
 
-fn copy_buffered<R: std::io::Read, W: std::io::Write>(reader: &mut R, writer: &mut W, buf_size: usize) -> Result<u64> {
+fn copy_buffered<R: std::io::Read, W: std::io::Write>(
+    reader: &mut R,
+    writer: &mut W,
+    buf_size: usize,
+) -> Result<u64> {
     let mut buf = vec![0u8; buf_size];
     let mut total: u64 = 0;
     loop {
         let n = reader.read(&mut buf)?;
-        if n == 0 { break; }
+        if n == 0 {
+            break;
+        }
         writer.write_all(&buf[..n])?;
         total += n as u64;
     }
@@ -451,7 +559,9 @@ fn is_incompressible(path: &Path, entropy_threshold: f64) -> Result<bool> {
     let total = n as f64;
     let mut entropy = 0.0f64;
     for &count in &freq {
-        if count == 0 { continue; }
+        if count == 0 {
+            continue;
+        }
         let p = count as f64 / total;
         entropy -= p * p.log2();
     }
