@@ -3,5 +3,5 @@ use clap::Parser;
 
 fn main() -> Result<()> {
     let cli_args = rolypoly::cli::Cli::parse();
-    cli_args.run()
+    cli_args.run(&mut std::io::stdout())
 }

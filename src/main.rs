@@ -28,5 +28,5 @@ fn main() -> Result<()> {
 
     // Otherwise, run CLI
     let cli_args = Cli::parse();
-    cli_args.run()
+    cli_args.run(&mut std::io::stdout())
 }

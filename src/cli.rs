@@ -4,6 +4,7 @@ use crate::progress;
 use anyhow::Result;
 use clap::{ArgAction, Parser, Subcommand};
 use serde::Serialize;
+use std::io::Write;
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -71,7 +72,7 @@ pub enum Commands {
 }
 
 impl Cli {
-    pub fn run(self) -> Result<()> {
+    pub fn run(self, writer: &mut impl Write) -> Result<()> {
         // Configure output mode for downstream operations
         // Default: human progress bars enabled; JSON progress only when both --json and --progress are set.
         let progress = if self.json { self.progress } else { true };
@@ -96,13 +97,14 @@ impl Cli {
                         event: &'a str,
                         archive: String,
                     }
-                    println!(
+                    writeln!(
+                        writer,
                         "{}",
                         serde_json::to_string(&Out {
                             event: "created",
                             archive: archive.display().to_string()
                         })?
-                    );
+                    )?;
                 }
                 // Otherwise progress and completion messages are handled by the archiver
             }
@@ -115,14 +117,15 @@ impl Cli {
                         archive: String,
                         output: String,
                     }
-                    println!(
+                    writeln!(
+                        writer,
                         "{}",
                         serde_json::to_string(&Out {
                             event: "extracted",
                             archive: archive.display().to_string(),
                             output: output.display().to_string()
                         })?
-                    );
+                    )?;
                 }
                 // Otherwise progress and completion messages are handled by the archiver
             }
@@ -134,20 +137,21 @@ impl Cli {
                         archive: String,
                         files: Vec<String>,
                     }
-                    println!(
+                    writeln!(
+                        writer,
                         "{}",
                         serde_json::to_string(&Out {
                             archive: archive.display().to_string(),
                             files: contents
                         })?
-                    );
+                    )?;
                 } else {
-                    println!("Archive: {}", archive.display());
+                    writeln!(writer, "Archive: {}", archive.display())?;
                     if contents.is_empty() {
-                        println!("Archive is empty");
+                        writeln!(writer, "Archive is empty")?;
                     } else {
                         for item in contents {
-                            println!("  {item}");
+                            writeln!(writer, "  {item}")?;
                         }
                     }
                 }
@@ -160,41 +164,43 @@ impl Cli {
                         archive: String,
                         valid: bool,
                     }
-                    println!(
+                    writeln!(
+                        writer,
                         "{}",
                         serde_json::to_string(&Out {
                             archive: archive.display().to_string(),
                             valid: is_valid
                         })?
-                    );
+                    )?;
                 } else if is_valid {
-                    println!("✓ Archive is valid and all files passed integrity checks");
+                    writeln!(writer, "✓ Archive is valid and all files passed integrity checks")?;
                 } else {
-                    println!("✗ Archive validation failed");
+                    writeln!(writer, "✗ Archive validation failed")?;
                 }
             }
             Commands::Stats { archive } => {
                 let stats = manager.get_archive_stats(&archive)?;
                 if self.json {
-                    println!("{}", serde_json::to_string(&stats)?);
+                    writeln!(writer, "{}", serde_json::to_string(&stats)?)?;
                 } else {
-                    println!("Archive Statistics:");
-                    println!("  Files: {}", stats.file_count);
-                    println!("  Directories: {}", stats.dir_count);
-                    println!("  Uncompressed size: {} bytes", stats.total_uncompressed_size);
-                    println!("  Compressed size: {} bytes", stats.total_compressed_size);
-                    println!("  Compression ratio: {:.1}%", stats.compression_ratio);
+                    writeln!(writer, "Archive Statistics:")?;
+                    writeln!(writer, "  Files: {}", stats.file_count)?;
+                    writeln!(writer, "  Directories: {}", stats.dir_count)?;
+                    writeln!(writer, "  Uncompressed size: {} bytes", stats.total_uncompressed_size)?;
+                    writeln!(writer, "  Compressed size: {} bytes", stats.total_compressed_size)?;
+                    writeln!(writer, "  Compression ratio: {:.1}%", stats.compression_ratio)?;
                     if stats.total_uncompressed_size > 0 {
                         if stats.total_uncompressed_size > stats.total_compressed_size {
                             let space_saved =
                                 stats.total_uncompressed_size - stats.total_compressed_size;
-                            println!("  Space saved: {space_saved} bytes");
+                            writeln!(writer, "  Space saved: {space_saved} bytes")?;
                         } else {
                             let space_increased =
                                 stats.total_compressed_size - stats.total_uncompressed_size;
-                            println!(
+                            writeln!(
+                                writer,
                                 "  Space increased: {space_increased} bytes (due to compression overhead)"
-                            );
+                            )?;
                         }
                     }
                 }
@@ -208,16 +214,17 @@ impl Cli {
                         algo: &'static str,
                         hash: String,
                     }
-                    println!(
+                    writeln!(
+                        writer,
                         "{}",
                         serde_json::to_string(&Out {
                             file: file.display().to_string(),
                             algo: "sha256",
                             hash
                         })?
-                    );
+                    )?;
                 } else {
-                    println!("SHA256: {hash}");
+                    writeln!(writer, "SHA256: {hash}")?;
                 }
             }
         }
@@ -254,7 +261,7 @@ mod tests {
             },
         };
 
-        cli.run()?;
+        cli.run(&mut std::io::sink())?;
 
         // Verify archive was created
         assert!(archive_path.exists());
@@ -291,7 +298,7 @@ mod tests {
             },
         };
 
-        cli.run()?;
+        cli.run(&mut std::io::sink())?;
 
         // Verify extracted file
         let extracted_file = extract_dir.join("test.txt");
@@ -328,7 +335,7 @@ mod tests {
 
         // This will print to stdout, but we can't easily capture it in tests
         // The actual functionality is tested in the archive module
-        cli.run()?;
+        cli.run(&mut std::io::sink())?;
 
         Ok(())
     }
@@ -351,7 +358,7 @@ mod tests {
         };
 
         // This should return an error
-        let result = cli.run();
+        let result = cli.run(&mut std::io::sink());
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("No files specified"));
     }
@@ -379,7 +386,7 @@ mod tests {
             },
         };
 
-        cli.run()?;
+        cli.run(&mut std::io::sink())?;
 
         Ok(())
     }
@@ -407,7 +414,7 @@ mod tests {
             },
         };
 
-        cli.run()?;
+        cli.run(&mut std::io::sink())?;
 
         Ok(())
     }
@@ -430,7 +437,43 @@ mod tests {
             command: Commands::Hash { file: test_file },
         };
 
-        cli.run()?;
+        cli.run(&mut std::io::sink())?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_cli_json_output() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let test_file = temp_dir.path().join("test.txt");
+        let archive_path = temp_dir.path().join("test.zip");
+
+        // Create a test file
+        fs::write(&test_file, "Hello, World!")?;
+
+        // Test create command with JSON output
+        let cli = Cli {
+            json: true,
+            progress: false,
+            level: None,
+            auto_store: true,
+            store_entropy_threshold: 7.8,
+            command: Commands::Create {
+                archive: archive_path.clone(),
+                files: vec![test_file],
+            },
+        };
+
+        let mut buffer = Vec::new();
+        cli.run(&mut buffer)?;
+
+        let output = String::from_utf8(buffer)?;
+
+        // Parse JSON output
+        let json: serde_json::Value = serde_json::from_str(&output)?;
+
+        assert_eq!(json["event"], "created");
+        assert_eq!(json["archive"], archive_path.display().to_string());
 
         Ok(())
     }
