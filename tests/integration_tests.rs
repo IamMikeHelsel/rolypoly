@@ -162,7 +162,9 @@ fn test_end_to_end_archive_workflow() -> Result<()> {
     // Expect exactly one line like "SHA256: <64 hex>"
     let line = hash_output.lines().find(|l| l.starts_with("SHA256:"));
     assert!(line.is_some());
-    if let Some(l) = line { assert!(l.len() >= "SHA256: ".len() + 64); }
+    if let Some(l) = line {
+        assert!(l.len() >= "SHA256: ".len() + 64);
+    }
 
     Ok(())
 }
