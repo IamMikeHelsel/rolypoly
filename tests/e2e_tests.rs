@@ -1,27 +1,6 @@
-#![cfg(feature = "gui")] // No-op now that GUI is removed
 use std::fs;
 use std::process::Command;
 use tempfile::TempDir;
-use tokio::process::Command as TokioCommand;
-use tokio::time::{Duration, sleep};
-
-#[tokio::test]
-async fn test_gui_launch_and_close() {
-    let output = TokioCommand::new("cargo")
-        .args(["run", "--features", "gui", "--bin", "rolypoly-gui"])
-        .kill_on_drop(true)
-        .spawn();
-
-    assert!(output.is_ok(), "Failed to start GUI");
-
-    // Let it run for a moment
-    sleep(Duration::from_millis(500)).await;
-
-    // Kill the process
-    if let Ok(mut child) = output {
-        let _ = child.kill().await;
-    }
-}
 
 #[tokio::test]
 async fn test_cli_create_and_extract() {
