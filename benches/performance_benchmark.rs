@@ -1,10 +1,10 @@
 #![allow(clippy::collapsible_if)]
+use std::env;
 use std::fs;
 use std::path::Path;
 use std::process::Command;
 use std::time::Instant;
 use tempfile::TempDir;
-use std::env;
 
 #[derive(Debug)]
 struct BenchmarkResult {

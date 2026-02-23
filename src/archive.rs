@@ -234,14 +234,20 @@ impl ArchiveManager {
                 }
                 processed += 1;
                 if mode.json {
-                    let pct = if total > 0 { (processed as f64) / (total as f64) } else { 0.0 };
+                    let pct = if total > 0 {
+                        (processed as f64) / (total as f64)
+                    } else {
+                        0.0
+                    };
                     crate::progress::print_json(&serde_json::json!({
                         "event":"progress","op":"create","file": path.display().to_string(),
                         "current": processed, "total": total, "pct": pct
                     }));
                 }
                 // Choose method per-file
-                let method = if self.opts.auto_store && is_incompressible(path, self.opts.store_entropy_threshold)? {
+                let method = if self.opts.auto_store
+                    && is_incompressible(path, self.opts.store_entropy_threshold)?
+                {
                     zip::CompressionMethod::Stored
                 } else {
                     zip::CompressionMethod::Deflated
@@ -423,11 +429,12 @@ impl ArchiveManager {
                 if let Some(pb) = progress_ctx.pb {
                     pb.set_message(format!("Adding: {}", path.display()));
                 }
-                let method = if opts.auto_store && is_incompressible(path, opts.store_entropy_threshold)? {
-                    zip::CompressionMethod::Stored
-                } else {
-                    zip::CompressionMethod::Deflated
-                };
+                let method =
+                    if opts.auto_store && is_incompressible(path, opts.store_entropy_threshold)? {
+                        zip::CompressionMethod::Stored
+                    } else {
+                        zip::CompressionMethod::Deflated
+                    };
                 let mut per_file = options.compression_method(method);
                 if let Some(level) = opts.compression_level {
                     per_file = per_file.compression_level(Some(level as i64));
@@ -440,7 +447,11 @@ impl ArchiveManager {
                 }
                 *progress_ctx.processed += 1;
                 if progress_ctx.json {
-                    let pct = if progress_ctx.total > 0 { (*progress_ctx.processed as f64) / (progress_ctx.total as f64) } else { 0.0 };
+                    let pct = if progress_ctx.total > 0 {
+                        (*progress_ctx.processed as f64) / (progress_ctx.total as f64)
+                    } else {
+                        0.0
+                    };
                     crate::progress::print_json(&serde_json::json!({
                         "event":"progress","op":"create","file": path.display().to_string(),
                         "current": *progress_ctx.processed, "total": progress_ctx.total, "pct": pct
@@ -455,12 +466,18 @@ impl ArchiveManager {
     }
 }
 
-fn copy_buffered<R: std::io::Read, W: std::io::Write>(reader: &mut R, writer: &mut W, buf_size: usize) -> Result<u64> {
+fn copy_buffered<R: std::io::Read, W: std::io::Write>(
+    reader: &mut R,
+    writer: &mut W,
+    buf_size: usize,
+) -> Result<u64> {
     let mut buf = vec![0u8; buf_size];
     let mut total: u64 = 0;
     loop {
         let n = reader.read(&mut buf)?;
-        if n == 0 { break; }
+        if n == 0 {
+            break;
+        }
         writer.write_all(&buf[..n])?;
         total += n as u64;
     }
@@ -483,7 +500,9 @@ fn is_incompressible(path: &Path, entropy_threshold: f64) -> Result<bool> {
     let total = n as f64;
     let mut entropy = 0.0f64;
     for &count in &freq {
-        if count == 0 { continue; }
+        if count == 0 {
+            continue;
+        }
         let p = count as f64 / total;
         entropy -= p * p.log2();
     }
