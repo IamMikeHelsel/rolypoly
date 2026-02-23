@@ -1,5 +1,5 @@
 use anyhow::Result;
-use indicatif::{ProgressBar, ProgressStyle};
+use indicatif::ProgressBar;
 use sha2::{Digest, Sha256};
 use std::fs::File;
 use std::io::{BufReader, Read};
@@ -34,8 +34,18 @@ pub struct ArchiveManager {
     opts: ArchiveOptions,
 }
 
+impl Default for ArchiveManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ArchiveManager {
-    pub fn new() -> Self { Self { opts: ArchiveOptions::default() } }
+    pub fn new() -> Self {
+        Self {
+            opts: ArchiveOptions::default(),
+        }
+    }
 
     pub fn with_options(opts: ArchiveOptions) -> Self {
         Self { opts }
@@ -50,25 +60,11 @@ impl ArchiveManager {
         println!("→ Validating: {}", archive_path.as_ref().display());
         let start = Instant::now();
         let total = archive.len() as u64;
-        let pb = if mode.progress && !mode.json {
-            let pb = ProgressBar::new(total);
-            pb.set_style(
-                ProgressStyle::default_bar()
-                    .template(
-                        "{spinner:.green} [{elapsed_precise}] {wide_bar:.cyan/blue} {pos:>5}/{len:<5} {percent:>3}% {eta_precise} | {msg}"
-                    )
-                    .unwrap()
-                    .progress_chars("█· "),
-            );
-            Some(pb)
-        } else {
-            if mode.json {
-                crate::progress::print_json(&serde_json::json!({
-                    "event":"start","op":"validate","archive": archive_path.as_ref().display().to_string(),"total": total
-                }));
-            }
-            None
-        };
+        let pb = crate::progress::create_progress_bar(total, || {
+            serde_json::json!({
+                "event":"start","op":"validate","archive": archive_path.as_ref().display().to_string(),"total": total
+            })
+        });
 
         for i in 0..archive.len() {
             let file = archive.by_index(i)?;
@@ -188,25 +184,11 @@ impl ArchiveManager {
         println!("→ Creating: {}", archive_path.as_ref().display());
         let start = Instant::now();
         let total = total_files as u64;
-        let pb = if mode.progress && !mode.json {
-            let pb = ProgressBar::new(total);
-            pb.set_style(
-                ProgressStyle::default_bar()
-                    .template(
-                        "{spinner:.green} [{elapsed_precise}] {wide_bar:.cyan/blue} {pos:>5}/{len:<5} {percent:>3}% {eta_precise} | {msg}"
-                    )
-                    .unwrap()
-                    .progress_chars("█· "),
-            );
-            Some(pb)
-        } else {
-            if mode.json {
-                crate::progress::print_json(&serde_json::json!({
-                    "event":"start","op":"create","archive": archive_path.as_ref().display().to_string(),"total": total
-                }));
-            }
-            None
-        };
+        let pb = crate::progress::create_progress_bar(total, || {
+            serde_json::json!({
+                "event":"start","op":"create","archive": archive_path.as_ref().display().to_string(),"total": total
+            })
+        });
 
         let mut processed: u64 = 0;
         for file_path in files {
@@ -217,19 +199,25 @@ impl ArchiveManager {
                 }
                 processed += 1;
                 if mode.json {
-                    let pct = if total > 0 { (processed as f64) / (total as f64) } else { 0.0 };
+                    let pct = if total > 0 {
+                        (processed as f64) / (total as f64)
+                    } else {
+                        0.0
+                    };
                     crate::progress::print_json(&serde_json::json!({
                         "event":"progress","op":"create","file": path.display().to_string(),
                         "current": processed, "total": total, "pct": pct
                     }));
                 }
                 // Choose method per-file
-                let method = if self.opts.auto_store && is_incompressible(path, self.opts.store_entropy_threshold)? {
+                let method = if self.opts.auto_store
+                    && is_incompressible(path, self.opts.store_entropy_threshold)?
+                {
                     zip::CompressionMethod::Stored
                 } else {
                     zip::CompressionMethod::Deflated
                 };
-                let mut options = base_options.clone().compression_method(method);
+                let mut options = base_options.compression_method(method);
                 if let Some(level) = self.opts.compression_level {
                     options = options.compression_level(Some(level as i64));
                 }
@@ -238,9 +226,18 @@ impl ArchiveManager {
                     pb.inc(1);
                 }
             } else if path.is_dir() {
-                let mut options = base_options.clone().compression_method(zip::CompressionMethod::Deflated);
-                if let Some(level) = self.opts.compression_level { options = options.compression_level(Some(level as i64)); }
-                self.add_dir_to_zip_with_progress(&mut zip, path, &options, &pb, mode.json, total, &mut processed, self.opts.clone())?;
+                let mut options = base_options.compression_method(zip::CompressionMethod::Deflated);
+                if let Some(level) = self.opts.compression_level {
+                    options = options.compression_level(Some(level as i64));
+                }
+                self.add_dir_to_zip_with_progress(
+                    &mut zip,
+                    path,
+                    &options,
+                    &pb,
+                    total,
+                    &mut processed,
+                )?;
             }
         }
 
@@ -271,26 +268,12 @@ impl ArchiveManager {
         );
         let start = Instant::now();
         let total = archive.len() as u64;
-        let pb = if mode.progress && !mode.json {
-            let pb = ProgressBar::new(total);
-            pb.set_style(
-                ProgressStyle::default_bar()
-                    .template(
-                        "{spinner:.green} [{elapsed_precise}] {wide_bar:.cyan/blue} {pos:>5}/{len:<5} {percent:>3}% {eta_precise} | {msg}"
-                    )
-                    .unwrap()
-                    .progress_chars("█· "),
-            );
-            Some(pb)
-        } else {
-            if mode.json {
-                crate::progress::print_json(&serde_json::json!({
-                    "event":"start","op":"extract","archive": archive_path.as_ref().display().to_string(),
-                    "total": total, "output": output_dir.as_ref().display().to_string()
-                }));
-            }
-            None
-        };
+        let pb = crate::progress::create_progress_bar(total, || {
+            serde_json::json!({
+                "event":"start","op":"extract","archive": archive_path.as_ref().display().to_string(),
+                "total": total, "output": output_dir.as_ref().display().to_string()
+            })
+        });
 
         for i in 0..archive.len() {
             let mut file = archive.by_index(i)?;
@@ -366,16 +349,15 @@ impl ArchiveManager {
         dir_path: &Path,
         options: &SimpleFileOptions,
         pb: &Option<ProgressBar>,
-        json: bool,
         total: u64,
         processed: &mut u64,
-        opts: ArchiveOptions,
     ) -> Result<()> {
         let walkdir = WalkDir::new(dir_path);
         let it = walkdir.into_iter();
 
         // Get the directory name to preserve structure
         let dir_name = dir_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        let json = crate::progress::output_mode().json;
 
         for entry in it {
             let entry = entry?;
@@ -393,22 +375,30 @@ impl ArchiveManager {
                 if let Some(pb) = pb {
                     pb.set_message(format!("Adding: {}", path.display()));
                 }
-                let method = if opts.auto_store && is_incompressible(path, opts.store_entropy_threshold)? {
+                let method = if self.opts.auto_store
+                    && is_incompressible(path, self.opts.store_entropy_threshold)?
+                {
                     zip::CompressionMethod::Stored
                 } else {
                     zip::CompressionMethod::Deflated
                 };
-                let mut per_file = options.clone().compression_method(method);
-                if let Some(level) = opts.compression_level { per_file = per_file.compression_level(Some(level as i64)); }
+                let mut per_file = (*options).compression_method(method);
+                if let Some(level) = self.opts.compression_level {
+                    per_file = per_file.compression_level(Some(level as i64));
+                }
                 zip.start_file(&archive_path, per_file)?;
                 let mut file = File::open(path)?;
-                copy_buffered(&mut file, zip, opts.io_buffer_size)?;
+                copy_buffered(&mut file, zip, self.opts.io_buffer_size)?;
                 if let Some(pb) = pb {
                     pb.inc(1);
                 }
                 *processed += 1;
                 if json {
-                    let pct = if total > 0 { (*processed as f64) / (total as f64) } else { 0.0 };
+                    let pct = if total > 0 {
+                        (*processed as f64) / (total as f64)
+                    } else {
+                        0.0
+                    };
                     crate::progress::print_json(&serde_json::json!({
                         "event":"progress","op":"create","file": path.display().to_string(),
                         "current": *processed, "total": total, "pct": pct
@@ -423,12 +413,18 @@ impl ArchiveManager {
     }
 }
 
-fn copy_buffered<R: std::io::Read, W: std::io::Write>(reader: &mut R, writer: &mut W, buf_size: usize) -> Result<u64> {
+fn copy_buffered<R: std::io::Read, W: std::io::Write>(
+    reader: &mut R,
+    writer: &mut W,
+    buf_size: usize,
+) -> Result<u64> {
     let mut buf = vec![0u8; buf_size];
     let mut total: u64 = 0;
     loop {
         let n = reader.read(&mut buf)?;
-        if n == 0 { break; }
+        if n == 0 {
+            break;
+        }
         writer.write_all(&buf[..n])?;
         total += n as u64;
     }
@@ -451,7 +447,9 @@ fn is_incompressible(path: &Path, entropy_threshold: f64) -> Result<bool> {
     let total = n as f64;
     let mut entropy = 0.0f64;
     for &count in &freq {
-        if count == 0 { continue; }
+        if count == 0 {
+            continue;
+        }
         let p = count as f64 / total;
         entropy -= p * p.log2();
     }
