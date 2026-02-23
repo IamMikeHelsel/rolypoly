@@ -1,9 +1,9 @@
+use std::env;
 use std::fs;
 use std::path::Path;
 use std::process::Command;
 use std::time::Instant;
 use tempfile::TempDir;
-use std::env;
 
 #[derive(Debug)]
 struct BenchmarkResult {
@@ -110,7 +110,9 @@ fn benchmark_rolypoly_create(
 
     let mut cmd = Command::new("./target/release/rolypoly");
     cmd.arg("create").arg(archive_path);
-    if let Ok(level) = env::var("RP_LEVEL") { if !level.is_empty() { cmd.arg("--level").arg(level); } }
+    if let Some(level) = env::var("RP_LEVEL").ok().filter(|l| !l.is_empty()) {
+        cmd.arg("--level").arg(level);
+    }
     for file in &files {
         cmd.arg(file);
     }
