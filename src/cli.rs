@@ -188,7 +188,11 @@ impl Cli {
                     writeln!(writer, "Archive Statistics:")?;
                     writeln!(writer, "  Files: {}", stats.file_count)?;
                     writeln!(writer, "  Directories: {}", stats.dir_count)?;
-                    writeln!(writer, "  Uncompressed size: {} bytes", stats.total_uncompressed_size)?;
+                    writeln!(
+                        writer,
+                        "  Uncompressed size: {} bytes",
+                        stats.total_uncompressed_size
+                    )?;
                     writeln!(writer, "  Compressed size: {} bytes", stats.total_compressed_size)?;
                     writeln!(writer, "  Compression ratio: {:.1}%", stats.compression_ratio)?;
                     if stats.total_uncompressed_size > 0 {
