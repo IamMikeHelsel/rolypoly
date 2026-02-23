@@ -1,7 +1,3 @@
-deny = ["unlicensed"]
-allow = []
-skip = []
-
 [bans]
 multiple-versions = "warn"
 wildcards = "deny"
@@ -14,4 +10,3 @@ copyleft = "warn"
 [sources]
 unknown-registry = "deny"
 unknown-git = "warn"
-
