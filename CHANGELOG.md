@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.1.0 - 2025-09-02
+## 0.1.0 - 2026-02-26
 - Initial CLI release of RolyPoly
 - Create/list/extract/validate/hash commands
 - Progress bars and integrity checks
