@@ -28,7 +28,7 @@ pub fn get_binary_path() -> PathBuf {
     PathBuf::from("cargo")
 }
 
-fn run_command(args: &[&str]) -> std::process::Output {
+pub fn run_command(args: &[&str]) -> std::process::Output {
     let bin = get_binary_path();
     if bin.to_string_lossy() == "cargo" {
          std::process::Command::new("cargo")
@@ -40,6 +40,24 @@ fn run_command(args: &[&str]) -> std::process::Output {
         std::process::Command::new(bin)
             .args(args)
             .output()
+            .expect("Failed to run binary")
+    }
+}
+
+pub async fn run_command_async(args: &[&str]) -> std::process::Output {
+    let bin = get_binary_path();
+    if bin.to_string_lossy() == "cargo" {
+        tokio::process::Command::new("cargo")
+            .args(["run", "--bin", "rolypoly", "--"])
+            .args(args)
+            .output()
+            .await
+            .expect("Failed to run cargo")
+    } else {
+        tokio::process::Command::new(bin)
+            .args(args)
+            .output()
+            .await
             .expect("Failed to run binary")
     }
 }
