@@ -33,8 +33,6 @@ async fn test_health_check_component() -> Result<()> {
 #[tokio::test]
 async fn test_create_archive_component() -> Result<()> {
     let temp_dir = TempDir::new()?;
-    let _file_to_compress = temp_dir.path().join("test_file.txt");
-    let _archive_path = temp_dir.path().join("gui_test.zip");
 
     // Use our test helper to create archive
     let result =
