@@ -24,11 +24,11 @@ pub fn get_binary_path() -> PathBuf {
         return release_bin;
     }
 
-    // Fallback to "cargo" but we will return a dummy path and handle it in the run_command
+    // Fallback to "cargo" but we will return a dummy path and handle it in run_binary_command
     PathBuf::from("cargo")
 }
 
-fn run_command(args: &[&str]) -> std::process::Output {
+pub fn run_binary_command(args: &[&str]) -> std::process::Output {
     let bin = get_binary_path();
     if bin.to_string_lossy() == "cargo" {
          std::process::Command::new("cargo")
@@ -66,7 +66,7 @@ pub fn create_test_archive(dir: &TempDir, files: &[(&str, &str)]) -> std::path::
         args.push(p.to_str().unwrap());
     }
 
-    let output = run_command(&args);
+    let output = run_binary_command(&args);
 
     if !output.status.success() {
         panic!("Failed to create test archive: {}", String::from_utf8_lossy(&output.stderr));
@@ -76,7 +76,7 @@ pub fn create_test_archive(dir: &TempDir, files: &[(&str, &str)]) -> std::path::
 }
 
 pub fn extract_archive(archive_path: &Path, output_dir: &Path) -> Result<(), String> {
-    let output = run_command(&[
+    let output = run_binary_command(&[
             "extract",
             archive_path.to_str().unwrap(),
             "-o",
@@ -91,7 +91,7 @@ pub fn extract_archive(archive_path: &Path, output_dir: &Path) -> Result<(), Str
 }
 
 pub fn list_archive_contents(archive_path: &Path) -> Result<String, String> {
-    let output = run_command(&["list", archive_path.to_str().unwrap()]);
+    let output = run_binary_command(&["list", archive_path.to_str().unwrap()]);
 
     if output.status.success() {
         Ok(String::from_utf8_lossy(&output.stdout).to_string())
@@ -101,7 +101,7 @@ pub fn list_archive_contents(archive_path: &Path) -> Result<String, String> {
 }
 
 pub fn validate_archive(archive_path: &Path) -> Result<String, String> {
-    let output = run_command(&["validate", archive_path.to_str().unwrap()]);
+    let output = run_binary_command(&["validate", archive_path.to_str().unwrap()]);
 
     if output.status.success() {
         Ok(String::from_utf8_lossy(&output.stdout).to_string())
@@ -112,7 +112,7 @@ pub fn validate_archive(archive_path: &Path) -> Result<String, String> {
 
 #[allow(dead_code)]
 pub fn get_archive_stats(archive_path: &Path) -> Result<String, String> {
-    let output = run_command(&["stats", archive_path.to_str().unwrap()]);
+    let output = run_binary_command(&["stats", archive_path.to_str().unwrap()]);
 
     if output.status.success() {
         Ok(String::from_utf8_lossy(&output.stdout).to_string())
@@ -122,7 +122,7 @@ pub fn get_archive_stats(archive_path: &Path) -> Result<String, String> {
 }
 
 pub fn calculate_file_hash(file_path: &Path) -> Result<String, String> {
-    let output = run_command(&["hash", file_path.to_str().unwrap()]);
+    let output = run_binary_command(&["hash", file_path.to_str().unwrap()]);
 
     if output.status.success() {
         Ok(String::from_utf8_lossy(&output.stdout).to_string())
