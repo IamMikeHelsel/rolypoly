@@ -82,6 +82,7 @@ impl Cli {
             auto_store: self.auto_store,
             store_entropy_threshold: self.store_entropy_threshold,
             ..ArchiveOptions::default()
+            ..Default::default()
         };
         let manager = ArchiveManager::with_options(opts);
 

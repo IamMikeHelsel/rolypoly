@@ -265,6 +265,10 @@ impl ArchiveManager {
                     &pb,
                     total,
                     &mut processed,
+                    mode.json,
+                    total,
+                    &mut processed,
+                    self.opts.clone(),
                 )?;
             }
         }
@@ -385,6 +389,7 @@ impl ArchiveManager {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn add_dir_to_zip_with_progress(
         &self,
         zip: &mut ZipWriter<File>,
@@ -425,6 +430,14 @@ impl ArchiveManager {
                 };
                 let mut per_file = (*options).compression_method(method);
                 if let Some(level) = self.opts.compression_level {
+                let method =
+                    if opts.auto_store && is_incompressible(path, opts.store_entropy_threshold)? {
+                        zip::CompressionMethod::Stored
+                    } else {
+                        zip::CompressionMethod::Deflated
+                    };
+                let mut per_file = (*options).compression_method(method);
+                if let Some(level) = opts.compression_level {
                     per_file = per_file.compression_level(Some(level as i64));
                 }
                 zip.start_file(&archive_path, per_file)?;
@@ -435,6 +448,7 @@ impl ArchiveManager {
                 }
                 *processed += 1;
                 if crate::progress::output_mode().json {
+                if json {
                     let pct = if total > 0 {
                         (*processed as f64) / (total as f64)
                     } else {
