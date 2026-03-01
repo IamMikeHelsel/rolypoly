@@ -21,7 +21,7 @@ fn get_binary_path() -> std::path::PathBuf {
 fn run_rolypoly(args: &[&str]) -> std::process::Output {
     let bin = get_binary_path();
     if bin.to_string_lossy() == "cargo" {
-         std::process::Command::new("cargo")
+        std::process::Command::new("cargo")
             .args(["run", "--bin", "rolypoly", "--"])
             .args(args)
             .output()
@@ -71,7 +71,10 @@ fn test_path_traversal_protection() -> Result<()> {
     // It should NOT write to temp_dir/evil.txt (outside extract_dir).
 
     let evil_file_outside = extract_dir.parent().unwrap().join("evil.txt");
-    assert!(!evil_file_outside.exists(), "Security vulnerability: Path traversal allowed writing outside extraction directory!");
+    assert!(
+        !evil_file_outside.exists(),
+        "Security vulnerability: Path traversal allowed writing outside extraction directory!"
+    );
 
     // Check if it wrote inside (sanitized)
     let evil_file_inside = extract_dir.join("evil.txt");
@@ -87,7 +90,10 @@ fn test_path_traversal_protection() -> Result<()> {
         if evil_file_inside.exists() {
             println!("Sanitized path traversal correctly.");
         } else {
-             println!("Maybe rejected the file? Output: {}", String::from_utf8_lossy(&output.stderr));
+            println!(
+                "Maybe rejected the file? Output: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
         }
     } else {
         println!("Extraction failed safely: {}", String::from_utf8_lossy(&output.stderr));
@@ -102,7 +108,10 @@ fn test_corrupted_archive() -> Result<()> {
     let corrupt_zip = temp_dir.path().join("corrupt.zip");
 
     // Write junk
-    fs::write(&corrupt_zip, b"PK\x03\x04This is not a valid zip file structure but looks like one maybe")?;
+    fs::write(
+        &corrupt_zip,
+        b"PK\x03\x04This is not a valid zip file structure but looks like one maybe",
+    )?;
 
     let output = run_rolypoly(&["validate", corrupt_zip.to_str().unwrap()]);
 
@@ -131,11 +140,8 @@ fn test_symlink_handling() -> Result<()> {
 
         let archive_path = temp_dir.path().join("symlinks.zip");
 
-        let output = run_rolypoly(&[
-            "create",
-            archive_path.to_str().unwrap(),
-            src_dir.to_str().unwrap(),
-        ]);
+        let output =
+            run_rolypoly(&["create", archive_path.to_str().unwrap(), src_dir.to_str().unwrap()]);
         assert!(output.status.success());
 
         // Now extract and check

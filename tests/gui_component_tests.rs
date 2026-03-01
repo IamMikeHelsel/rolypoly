@@ -18,13 +18,11 @@ async fn test_health_check_component() -> Result<()> {
 
     let bin = test_helpers::get_binary_path();
     let output = if bin.to_string_lossy() == "cargo" {
-         std::process::Command::new("cargo")
+        std::process::Command::new("cargo")
             .args(["run", "--bin", "rolypoly", "--", "--version"])
             .output()?
     } else {
-        std::process::Command::new(bin)
-            .args(["--version"])
-            .output()?
+        std::process::Command::new(bin).args(["--version"]).output()?
     };
     assert!(output.status.success());
     Ok(())
@@ -143,13 +141,11 @@ async fn test_get_app_info_component() -> Result<()> {
     // Similar to health check, verify version/app info
     let bin = test_helpers::get_binary_path();
     let output = if bin.to_string_lossy() == "cargo" {
-         std::process::Command::new("cargo")
+        std::process::Command::new("cargo")
             .args(["run", "--bin", "rolypoly", "--", "--version"])
             .output()?
     } else {
-        std::process::Command::new(bin)
-            .args(["--version"])
-            .output()?
+        std::process::Command::new(bin).args(["--version"]).output()?
     };
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
@@ -157,20 +153,29 @@ async fn test_get_app_info_component() -> Result<()> {
     Ok(())
 }
 
-
 // Error Handling
 
 #[tokio::test]
 async fn test_create_archive_error_handling() -> Result<()> {
     // Test with non-existent file
+    let temp_dir = TempDir::new()?;
+    let archive_path = temp_dir.path().join("archive.zip");
     let bin = test_helpers::get_binary_path();
     let output = if bin.to_string_lossy() == "cargo" {
-         std::process::Command::new("cargo")
-            .args(["run", "--bin", "rolypoly", "--", "create", "archive.zip", "non_existent_file.txt"])
+        std::process::Command::new("cargo")
+            .args([
+                "run",
+                "--bin",
+                "rolypoly",
+                "--",
+                "create",
+                archive_path.to_str().unwrap(),
+                "non_existent_file.txt",
+            ])
             .output()?
     } else {
         std::process::Command::new(bin)
-            .args(["create", "archive.zip", "non_existent_file.txt"])
+            .args(["create", archive_path.to_str().unwrap(), "non_existent_file.txt"])
             .output()?
     };
     assert!(!output.status.success());
@@ -182,7 +187,7 @@ async fn test_list_archive_error_handling() -> Result<()> {
     // Test with non-existent archive
     let bin = test_helpers::get_binary_path();
     let output = if bin.to_string_lossy() == "cargo" {
-         std::process::Command::new("cargo")
+        std::process::Command::new("cargo")
             .args(["run", "--bin", "rolypoly", "--", "list", "non_existent_archive.zip"])
             .output()?
     } else {
@@ -203,7 +208,7 @@ async fn test_validate_archive_error_handling() -> Result<()> {
 
     let bin = test_helpers::get_binary_path();
     let output = if bin.to_string_lossy() == "cargo" {
-         std::process::Command::new("cargo")
+        std::process::Command::new("cargo")
             .args(["run", "--bin", "rolypoly", "--", "validate", bad_file.to_str().unwrap()])
             .output()?
     } else {
@@ -215,7 +220,11 @@ async fn test_validate_archive_error_handling() -> Result<()> {
     // Let's assume for "bad.zip" (text file) it returns Err.
     if output.status.success() {
         let stdout = String::from_utf8_lossy(&output.stdout);
-        assert!(stdout.contains("failed") || stdout.contains("Invalid") || stdout.contains("Archive validation failed"));
+        assert!(
+            stdout.contains("failed")
+                || stdout.contains("Invalid")
+                || stdout.contains("Archive validation failed")
+        );
     } else {
         // Also acceptable if it crashes/errors out on bad format
         assert!(true);
@@ -228,7 +237,7 @@ async fn test_calculate_file_hash_error_handling() -> Result<()> {
     // Test with non-existent file
     let bin = test_helpers::get_binary_path();
     let output = if bin.to_string_lossy() == "cargo" {
-         std::process::Command::new("cargo")
+        std::process::Command::new("cargo")
             .args(["run", "--bin", "rolypoly", "--", "hash", "non_existent_file.txt"])
             .output()?
     } else {
@@ -249,7 +258,7 @@ async fn test_fun_error_messages() -> Result<()> {
     // we will check if error messages are user-friendly (not panics).
     let bin = test_helpers::get_binary_path();
     let output = if bin.to_string_lossy() == "cargo" {
-         std::process::Command::new("cargo")
+        std::process::Command::new("cargo")
             .args(["run", "--bin", "rolypoly", "--", "create"]) // Missing args
             .output()?
     } else {
@@ -272,7 +281,7 @@ async fn test_fun_success_messages() -> Result<()> {
 
     let bin = test_helpers::get_binary_path();
     let output = if bin.to_string_lossy() == "cargo" {
-         std::process::Command::new("cargo")
+        std::process::Command::new("cargo")
             .args(["run", "--bin", "rolypoly", "--", "validate", archive_path.to_str().unwrap()])
             .output()?
     } else {
@@ -311,7 +320,7 @@ async fn test_concurrent_gui_operations() -> Result<()> {
 
     let t1 = tokio::spawn(async move {
         if bin1.to_string_lossy() == "cargo" {
-             std::process::Command::new("cargo")
+            std::process::Command::new("cargo")
                 .args(["run", "--bin", "rolypoly", "--", "create", &archive1_s, &file1_s])
                 .output()
         } else {
@@ -323,7 +332,7 @@ async fn test_concurrent_gui_operations() -> Result<()> {
 
     let t2 = tokio::spawn(async move {
         if bin2.to_string_lossy() == "cargo" {
-             std::process::Command::new("cargo")
+            std::process::Command::new("cargo")
                 .args(["run", "--bin", "rolypoly", "--", "create", &archive2_s, &file2_s])
                 .output()
         } else {
@@ -358,7 +367,8 @@ async fn test_complete_gui_workflow() -> Result<()> {
 
     // 1. Create
     // Use test_helpers which now respects binary path
-    let archive_path_ret = test_helpers::create_test_archive(&temp_dir, &[("wfile.txt", "workflow content")]);
+    let archive_path_ret =
+        test_helpers::create_test_archive(&temp_dir, &[("wfile.txt", "workflow content")]);
     // We overwrote archive_path in create_test_archive (it creates 'test.zip').
     // Let's use the returned path
     let archive_path = archive_path_ret;

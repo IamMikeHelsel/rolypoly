@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 
+use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
-use std::env;
 
 /// Returns the path to the built binary, or falls back to "cargo run"
 pub fn get_binary_path() -> PathBuf {
@@ -28,10 +28,10 @@ pub fn get_binary_path() -> PathBuf {
     PathBuf::from("cargo")
 }
 
-fn run_command(args: &[&str]) -> std::process::Output {
+pub fn run_command(args: &[&str]) -> std::process::Output {
     let bin = get_binary_path();
     if bin.to_string_lossy() == "cargo" {
-         std::process::Command::new("cargo")
+        std::process::Command::new("cargo")
             .args(["run", "--bin", "rolypoly", "--"])
             .args(args)
             .output()
@@ -77,10 +77,10 @@ pub fn create_test_archive(dir: &TempDir, files: &[(&str, &str)]) -> std::path::
 
 pub fn extract_archive(archive_path: &Path, output_dir: &Path) -> Result<(), String> {
     let output = run_command(&[
-            "extract",
-            archive_path.to_str().unwrap(),
-            "-o",
-            output_dir.to_str().unwrap(),
+        "extract",
+        archive_path.to_str().unwrap(),
+        "-o",
+        output_dir.to_str().unwrap(),
     ]);
 
     if output.status.success() {
