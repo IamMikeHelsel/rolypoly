@@ -37,38 +37,19 @@ class RolyPolyApp extends StatelessWidget {
   }
 }
 
-class _Home extends StatefulWidget {
-  const _Home();
-  @override
-  State<_Home> createState() => _HomeState();
-}
-
+class _Home extends StatefulWidget { const _Home(); @override State<_Home> createState() => _HomeState(); }
 class _HomeState extends State<_Home> {
   int _index = 0;
-  final _pages = const [
-    CompressScreen(),
-    ExtractScreen(),
-    InspectScreen(),
-    ValidateStatsScreen(),
-  ];
+  final _pages = const [CompressScreen(), ExtractScreen(), InspectScreen(), ValidateStatsScreen()];
   final _titles = const ['Compress', 'Extract', 'Inspect', 'Validate & Stats'];
   @override
   Widget build(BuildContext context) {
-    const appVersion = String.fromEnvironment(
-      'APP_VERSION',
-      defaultValue: 'dev',
-    );
+    const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: 'dev');
     final banner = kIsWeb
         ? MaterialBanner(
-            content: const Text(
-              'Web preview: operations require a backend or will be limited. Use desktop app for full functionality.',
-            ),
+            content: const Text('Web preview: operations require a backend or will be limited. Use desktop app for full functionality.'),
             actions: [
-              TextButton(
-                onPressed: () =>
-                    ScaffoldMessenger.of(context).hideCurrentMaterialBanner(),
-                child: const Text('Dismiss'),
-              ),
+              TextButton(onPressed: () => ScaffoldMessenger.of(context).hideCurrentMaterialBanner(), child: const Text('Dismiss'))
             ],
           )
         : null;
@@ -83,10 +64,7 @@ class _HomeState extends State<_Home> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Row(
               children: [
-                Text(
-                  'v$appVersion',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                Text('v$appVersion', style: Theme.of(context).textTheme.bodySmall),
                 const Spacer(),
                 TextButton.icon(
                   onPressed: () => _showAbout(context, appVersion),
@@ -122,9 +100,7 @@ Future<void> _openGitHub(BuildContext context) async {
   const url = 'https://github.com/user/rolypoly';
   final ok = await launchUrlString(url);
   if (!ok) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Repo: https://github.com/user/rolypoly')),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Repo: https://github.com/user/rolypoly')));
   }
 }
 
@@ -136,9 +112,7 @@ void _showAbout(BuildContext context, String version) {
     children: const [
       Text('Modern ZIP archiver — CLI, Desktop, and PWA.'),
       SizedBox(height: 8),
-      Text(
-        'Desktop uses the Rust CLI for full performance. Web provides a convenient preview (client-side).',
-      ),
+      Text('Desktop uses the Rust CLI for full performance. Web provides a convenient preview (client-side).'),
     ],
   );
 }

@@ -26,64 +26,38 @@ class _InspectScreenState extends State<InspectScreen> {
     final b = File('${tmp.path}/b.txt')..writeAsStringSync('B');
     final zip = '${tmp.path}/sample.zip';
     await _cli.create(zip, [a.path, b.path]);
-    setState(() {
-      _archive = zip;
-    });
+    setState(() { _archive = zip; });
   }
 
   Future<void> _pickArchive() async {
-    final f = await openFile(
-      acceptedTypeGroups: const [
-        XTypeGroup(label: 'ZIP', extensions: ['zip']),
-      ],
-    );
+    final f = await openFile(acceptedTypeGroups: const [XTypeGroup(label: 'ZIP', extensions: ['zip'])]);
     if (f == null) return;
     if (kIsWeb) {
       _webBytes = await f.readAsBytes();
       _webName = f.name;
       setState(() {});
     } else {
-      setState(() {
-        _archive = f.path;
-      });
+      setState(() { _archive = f.path; });
     }
   }
 
   Future<void> _runList() async {
     if (!kIsWeb && _archive == null) return;
-    setState(() {
-      _status = 'Listing…';
-      _files = [];
-    });
+    setState(() { _status = 'Listing…'; _files = []; });
     if (kIsWeb) {
-      if (_webBytes == null) {
-        setState(() {
-          _status = 'Pick a ZIP';
-        });
-        return;
-      }
+      if (_webBytes == null) { setState(() { _status = 'Pick a ZIP'; }); return; }
       try {
         final files = WebZipReadService().list(_webBytes!);
-        setState(() {
-          _files = files;
-          _status = 'Done';
-        });
+        setState(() { _files = files; _status = 'Done'; });
       } catch (e) {
-        setState(() {
-          _status = 'Failed: $e';
-        });
+        setState(() { _status = 'Failed: $e'; });
       }
     } else {
       final data = await _cli.listJson(_archive!);
       if (data != null) {
-        setState(() {
-          _files = List<String>.from(data['files'] ?? []);
-          _status = 'Done';
-        });
+        setState(() { _files = List<String>.from(data['files'] ?? []); _status = 'Done'; });
       } else {
-        setState(() {
-          _status = 'Failed';
-        });
+        setState(() { _status = 'Failed'; });
       }
     }
   }
@@ -91,61 +65,32 @@ class _InspectScreenState extends State<InspectScreen> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              if (!kIsWeb) ...[
-                FilledButton.tonal(
-                  onPressed: _prepareSample,
-                  child: const Text('Sample'),
-                ),
-                const SizedBox(width: 12),
-              ],
-              OutlinedButton.icon(
-                onPressed: _pickArchive,
-                icon: const Icon(Icons.upload_file),
-                label: const Text('Pick Archive'),
-              ),
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            if (!kIsWeb) ...[
+              FilledButton.tonal(onPressed: _prepareSample, child: const Text('Sample')),
               const SizedBox(width: 12),
-              FilledButton.tonal(
-                onPressed:
-                    (!kIsWeb && _archive == null) &&
-                        (kIsWeb && _webBytes == null)
-                    ? null
-                    : _runList,
-                child: const Text('List'),
-              ),
             ],
-          ),
+            OutlinedButton.icon(onPressed: _pickArchive, icon: const Icon(Icons.upload_file), label: const Text('Pick Archive')),
+            const SizedBox(width: 12),
+            FilledButton.tonal(onPressed: (!kIsWeb && _archive == null) && (kIsWeb && _webBytes == null) ? null : _runList, child: const Text('List')),
+          ]),
           const SizedBox(height: 12),
-          Text('Archive: ${kIsWeb ? (_webName ?? '-') : (_archive ?? '-')}'),
+          Text('Archive: ${kIsWeb ? (_webName ?? '-') : (_archive ?? '-') }'),
           const SizedBox(height: 12),
           Expanded(
             child: DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
-              ),
+              decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
               child: ListView.builder(
                 itemCount: _files.length,
-                itemBuilder: (ctx, i) => ListTile(
-                  dense: true,
-                  title: Text(
-                    _files[i],
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
+                itemBuilder: (ctx, i) => ListTile(dense: true, title: Text(_files[i], maxLines: 1, overflow: TextOverflow.ellipsis)),
               ),
             ),
           ),
           const SizedBox(height: 8),
           Text(_status),
-        ],
-      ),
-    );
+        ]),
+      );
   }
 }

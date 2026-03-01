@@ -6,12 +6,7 @@ class DropArea extends StatelessWidget {
   final Widget child;
   final PathsDropped onDropped;
   final bool enabled;
-  const DropArea({
-    super.key,
-    required this.child,
-    required this.onDropped,
-    this.enabled = true,
-  });
+  const DropArea({super.key, required this.child, required this.onDropped, this.enabled = true});
 
   @override
   Widget build(BuildContext context) {

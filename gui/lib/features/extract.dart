@@ -33,19 +33,11 @@ class _ExtractScreenState extends State<ExtractScreen> {
     final inFile = File('${tmp.path}/a.txt')..writeAsStringSync('hello');
     final zip = '${tmp.path}/sample.zip';
     await _cli.create(zip, [inFile.path]);
-    setState(() {
-      _archive = zip;
-      _outDir = '${tmp.path}/extracted';
-      Directory(_outDir!).createSync(recursive: true);
-    });
+    setState(() { _archive = zip; _outDir = '${tmp.path}/extracted'; Directory(_outDir!).createSync(recursive: true); });
   }
 
   Future<void> _pickArchive() async {
-    final file = await openFile(
-      acceptedTypeGroups: const [
-        XTypeGroup(label: 'ZIP', extensions: ['zip']),
-      ],
-    );
+    final file = await openFile(acceptedTypeGroups: const [XTypeGroup(label: 'ZIP', extensions: ['zip'])]);
     if (file == null) return;
     if (kIsWeb) {
       _webBytes = await file.readAsBytes();
@@ -55,13 +47,9 @@ class _ExtractScreenState extends State<ExtractScreen> {
         _selected
           ..clear()
           ..addAll(_entries);
-        setState(() {
-          _status = 'Ready';
-        });
+        setState(() { _status = 'Ready'; });
       } catch (e) {
-        setState(() {
-          _status = 'Failed to read: $e';
-        });
+        setState(() { _status = 'Failed to read: $e'; });
       }
     } else {
       setState(() => _archive = file.path);
@@ -76,94 +64,51 @@ class _ExtractScreenState extends State<ExtractScreen> {
   Future<void> _runExtract() async {
     if (kIsWeb) {
       if (_webBytes == null) return;
-      setState(() {
-        _running = true;
-        _status = 'Preparing downloads…';
-      });
+      setState(() { _running = true; _status = 'Preparing downloads…'; });
       try {
-        await WebZipReadService().extractSelected(
-          _webBytes!,
-          _selected.toList(),
-        );
-        setState(() {
-          _running = false;
-          _status = 'Downloaded';
-        });
+        await WebZipReadService().extractSelected(_webBytes!, _selected.toList());
+        setState(() { _running = false; _status = 'Downloaded'; });
       } catch (e) {
-        setState(() {
-          _running = false;
-          _status = 'Failed: $e';
-        });
+        setState(() { _running = false; _status = 'Failed: $e'; });
       }
       return;
     }
     if (_archive == null || _outDir == null) return;
-    setState(() {
-      _running = true;
-      _pct = 0;
-      _status = 'Starting…';
-      _error = null;
-    });
+    setState(() { _running = true; _pct = 0; _status = 'Starting…'; _error = null; });
     try {
       await for (final evt in _cli.streamExtract(_archive!, _outDir!)) {
         final event = evt['event'] as String?;
         if (event == 'progress') {
-          setState(() {
-            _pct = (evt['pct'] ?? 0).toDouble();
-            _status = 'Extracting ${evt['file']}';
-          });
+          setState(() { _pct = (evt['pct'] ?? 0).toDouble(); _status = 'Extracting ${evt['file']}'; });
         } else if (event == 'start') {
-          setState(() {
-            _status = 'Extracting…';
-          });
+          setState(() { _status = 'Extracting…'; });
         } else if (event == 'done') {
-          setState(() {
-            _pct = 1;
-            _status = 'Done';
-            _running = false;
-          });
+          setState(() { _pct = 1; _status = 'Done'; _running = false; });
         }
       }
-      setState(() {
-        _running = false;
-      });
+      setState(() { _running = false; });
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _running = false;
-      });
+      setState(() { _error = e.toString(); _running = false; });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              OutlinedButton.icon(
-                onPressed: _running ? null : _pickArchive,
-                icon: const Icon(Icons.upload_file),
-                label: const Text('Pick Archive'),
-              ),
-              const SizedBox(width: 8),
-              if (!kIsWeb)
-                OutlinedButton.icon(
-                  onPressed: _running ? null : _pickOutDir,
-                  icon: const Icon(Icons.folder_open),
-                  label: const Text('Output Folder'),
-                ),
-              const Spacer(),
-              FilledButton.tonalIcon(
-                onPressed: _running ? null : _runExtract,
-                icon: const Icon(Icons.unarchive),
-                label: Text(kIsWeb ? 'Download' : 'Extract'),
-              ),
-            ],
-          ),
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            OutlinedButton.icon(onPressed: _running ? null : _pickArchive, icon: const Icon(Icons.upload_file), label: const Text('Pick Archive')),
+            const SizedBox(width: 8),
+            if (!kIsWeb)
+              OutlinedButton.icon(onPressed: _running ? null : _pickOutDir, icon: const Icon(Icons.folder_open), label: const Text('Output Folder')),
+            const Spacer(),
+            FilledButton.tonalIcon(
+              onPressed: _running ? null : _runExtract,
+              icon: const Icon(Icons.unarchive),
+              label: Text(kIsWeb ? 'Download' : 'Extract'),
+            ),
+          ]),
           const SizedBox(height: 12),
           if (kIsWeb)
             Expanded(
@@ -178,28 +123,18 @@ class _ExtractScreenState extends State<ExtractScreen> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                              children: [
-                                Text(
-                                  'Selected ${_selected.length}/${_entries.length}',
-                                ),
-                                const Spacer(),
-                                TextButton(
-                                  onPressed: () => setState(() {
-                                    _selected
-                                      ..clear()
-                                      ..addAll(_entries);
-                                  }),
-                                  child: const Text('Select All'),
-                                ),
-                                TextButton(
-                                  onPressed: () => setState(() {
-                                    _selected.clear();
-                                  }),
-                                  child: const Text('None'),
-                                ),
-                              ],
-                            ),
+                            child: Row(children: [
+                              Text('Selected ${_selected.length}/${_entries.length}'),
+                              const Spacer(),
+                              TextButton(
+                                onPressed: () => setState(() { _selected..clear()..addAll(_entries); }),
+                                child: const Text('Select All'),
+                              ),
+                              TextButton(
+                                onPressed: () => setState(() { _selected.clear(); }),
+                                child: const Text('None'),
+                              ),
+                            ]),
                           ),
                           const Divider(height: 1),
                           Expanded(
@@ -213,18 +148,10 @@ class _ExtractScreenState extends State<ExtractScreen> {
                                   value: selected,
                                   onChanged: (v) {
                                     setState(() {
-                                      if (v == true) {
-                                        _selected.add(name);
-                                      } else {
-                                        _selected.remove(name);
-                                      }
+                                      if (v == true) { _selected.add(name); } else { _selected.remove(name); }
                                     });
                                   },
-                                  title: Text(
-                                    name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                                  title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
                                 );
                               },
                             ),
@@ -249,19 +176,13 @@ class _ExtractScreenState extends State<ExtractScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
-                          Icons.file_upload,
-                          size: 48,
-                          color: Colors.grey,
-                        ),
+                        const Icon(Icons.file_upload, size: 48, color: Colors.grey),
                         const SizedBox(height: 8),
                         Text('Archive: ${_archive ?? '-'}'),
                         const SizedBox(height: 8),
                         Text('Output dir: ${_outDir ?? '-'}'),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Drag & drop a .zip here or use Pick Archive',
-                        ),
+                        const Text('Drag & drop a .zip here or use Pick Archive'),
                       ],
                     ),
                   ),
@@ -269,16 +190,11 @@ class _ExtractScreenState extends State<ExtractScreen> {
               ),
             ),
           const SizedBox(height: 12),
-          if (!kIsWeb)
-            LinearProgressIndicator(
-              value: _running ? null : (_pct == 0 ? null : _pct),
-            ),
+          if (!kIsWeb) LinearProgressIndicator(value: _running ? null : (_pct == 0 ? null : _pct)),
           const SizedBox(height: 8),
           Text(_status),
-          if (_error != null)
-            Text(_error!, style: const TextStyle(color: Colors.red)),
-        ],
-      ),
-    );
+          if (_error != null) Text(_error!, style: const TextStyle(color: Colors.red)),
+        ]),
+      );
   }
 }
