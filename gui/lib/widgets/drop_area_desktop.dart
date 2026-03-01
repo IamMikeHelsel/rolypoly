@@ -7,7 +7,12 @@ class DropArea extends StatefulWidget {
   final Widget child;
   final PathsDropped onDropped;
   final bool enabled;
-  const DropArea({super.key, required this.child, required this.onDropped, this.enabled = true});
+  const DropArea({
+    super.key,
+    required this.child,
+    required this.onDropped,
+    this.enabled = true,
+  });
 
   @override
   State<DropArea> createState() => _DropAreaState();
@@ -38,4 +43,3 @@ class _DropAreaState extends State<DropArea> {
     );
   }
 }
-

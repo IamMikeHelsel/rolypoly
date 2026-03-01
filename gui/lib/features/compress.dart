@@ -32,20 +32,26 @@ class _CompressScreenState extends State<CompressScreen> {
     for (final p in paths) {
       if (!next.contains(p)) next.add(p);
     }
-    setState(() => _inputs
-      ..clear()
-      ..addAll(next));
+    setState(
+      () => _inputs
+        ..clear()
+        ..addAll(next),
+    );
   }
 
   Future<void> _pickFiles() async {
-    final files = await openFiles(acceptedTypeGroups: const [XTypeGroup(label: 'Any')]);
+    final files = await openFiles(
+      acceptedTypeGroups: const [XTypeGroup(label: 'Any')],
+    );
     if (files.isEmpty) return;
     if (kIsWeb) {
       for (final xf in files) {
         final bytes = await xf.readAsBytes();
         var name = xf.name;
         var i = 1;
-        while (_inputsWeb.containsKey(name)) { name = "${xf.name}(${i++})"; }
+        while (_inputsWeb.containsKey(name)) {
+          name = "${xf.name}(${i++})";
+        }
         _inputsWeb[name] = bytes;
       }
       setState(() {});
@@ -78,9 +84,16 @@ class _CompressScreenState extends State<CompressScreen> {
         _status = 'Zipping in browser…';
         final data = await WebZipService().createZip(_inputsWeb);
         downloadBytes(data, 'archive.zip');
-        setState(() { _pct = 1; _status = 'Downloaded archive.zip'; _running = false; });
+        setState(() {
+          _pct = 1;
+          _status = 'Downloaded archive.zip';
+          _running = false;
+        });
       } catch (e) {
-        setState(() { _error = e.toString(); _running = false; });
+        setState(() {
+          _error = e.toString();
+          _running = false;
+        });
       }
       return;
     }
@@ -88,7 +101,10 @@ class _CompressScreenState extends State<CompressScreen> {
     var out = _archivePath;
     if (out == null || out.isEmpty) {
       final picked = await pickSaveZip(suggestedName: 'archive.zip');
-      if (picked == null) { setState(() => _running = false); return; }
+      if (picked == null) {
+        setState(() => _running = false);
+        return;
+      }
       out = picked;
       setState(() => _archivePath = out);
     }
@@ -128,96 +144,142 @@ class _CompressScreenState extends State<CompressScreen> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            FilledButton.tonalIcon(onPressed: _running ? null : _pickFiles, icon: const Icon(Icons.add), label: const Text('Add Files')),
-            if (!kIsWeb) ...[
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: _running ? null : _pickFiles,
+                icon: const Icon(Icons.add),
+                label: const Text('Add Files'),
+              ),
+              if (!kIsWeb) ...[
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: _running ? null : _pickFolder,
+                  icon: const Icon(Icons.create_new_folder),
+                  label: const Text('Add Folder'),
+                ),
+              ],
+              const Spacer(),
+              if (!kIsWeb)
+                OutlinedButton.icon(
+                  onPressed: _running ? null : _chooseOutput,
+                  icon: const Icon(Icons.save_alt),
+                  label: Text(
+                    _archivePath == null ? 'Choose Output' : 'Change Output',
+                  ),
+                ),
               const SizedBox(width: 8),
-              OutlinedButton.icon(onPressed: _running ? null : _pickFolder, icon: const Icon(Icons.create_new_folder), label: const Text('Add Folder')),
+              FilledButton.tonalIcon(
+                onPressed:
+                    _running || (kIsWeb ? _inputsWeb.isEmpty : _inputs.isEmpty)
+                    ? null
+                    : _runCreate,
+                icon: const Icon(Icons.archive_outlined),
+                label: Text(kIsWeb ? 'Create (download)' : 'Create'),
+              ),
             ],
-            const Spacer(),
-            if (!kIsWeb)
-              OutlinedButton.icon(onPressed: _running ? null : _chooseOutput, icon: const Icon(Icons.save_alt), label: Text(_archivePath == null ? 'Choose Output' : 'Change Output')),
-            const SizedBox(width: 8),
-            FilledButton.tonalIcon(
-              onPressed: _running || (kIsWeb ? _inputsWeb.isEmpty : _inputs.isEmpty) ? null : _runCreate,
-              icon: const Icon(Icons.archive_outlined),
-              label: Text(kIsWeb ? 'Create (download)' : 'Create'),
-            ),
-          ]),
+          ),
           const SizedBox(height: 12),
-          if (!kIsWeb && _archivePath != null) Text('Output: $_archivePath', style: const TextStyle(fontStyle: FontStyle.italic)),
+          if (!kIsWeb && _archivePath != null)
+            Text(
+              'Output: $_archivePath',
+              style: const TextStyle(fontStyle: FontStyle.italic),
+            ),
           const SizedBox(height: 12),
           Expanded(
             child: DropArea(
               onDropped: (paths) => _addPaths(paths),
               child: Padding(
                 padding: const EdgeInsets.all(12),
-                child: Builder(builder: (_) {
-                  final items = kIsWeb ? _inputsWeb.keys.toList() : _inputs;
-                  if (items.isEmpty) {
-                    return const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.upload_file, size: 48, color: Colors.grey),
-                          SizedBox(height: 8),
-                          Text('Drag & drop files here'),
-                          SizedBox(height: 4),
-                          Text('Or use Add Files', style: TextStyle(color: Colors.grey)),
-                        ],
-                      ),
-                    );
-                  }
-                  return ListView.separated(
-                    itemCount: items.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (_, i) {
-                      final name = items[i];
-                      return ListTile(
-                        dense: true,
-                        title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                        leading: const Icon(Icons.insert_drive_file),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.close),
-                          tooltip: 'Remove',
-                          onPressed: _running
-                              ? null
-                              : () => setState(() {
+                child: Builder(
+                  builder: (_) {
+                    final items = kIsWeb ? _inputsWeb.keys.toList() : _inputs;
+                    if (items.isEmpty) {
+                      return const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.upload_file,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(height: 8),
+                            Text('Drag & drop files here'),
+                            SizedBox(height: 4),
+                            Text(
+                              'Or use Add Files',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    return ListView.separated(
+                      itemCount: items.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (_, i) {
+                        final name = items[i];
+                        return ListTile(
+                          dense: true,
+                          title: Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          leading: const Icon(Icons.insert_drive_file),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.close),
+                            tooltip: 'Remove',
+                            onPressed: _running
+                                ? null
+                                : () => setState(() {
                                     if (kIsWeb) {
                                       _inputsWeb.remove(name);
                                     } else {
                                       _inputs.removeAt(i);
                                     }
                                   }),
-                        ),
-                      );
-                    },
-                  );
-                }),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ),
           ),
           const SizedBox(height: 12),
-          LinearProgressIndicator(value: _running ? null : (_pct <= 0 ? null : _pct)),
+          LinearProgressIndicator(
+            value: _running ? null : (_pct <= 0 ? null : _pct),
+          ),
           const SizedBox(height: 8),
-          Row(children: [
-            Expanded(child: Text(_status)),
-            if (((!kIsWeb && _inputs.isNotEmpty) || (kIsWeb && _inputsWeb.isNotEmpty)) && !_running)
-              TextButton.icon(
-                onPressed: () => setState(() {
-                  _inputs.clear();
-                  _inputsWeb.clear();
-                  _pct = 0;
-                  _status = 'Idle';
-                }),
-                icon: const Icon(Icons.clear_all),
-                label: const Text('Clear'),
-              ),
-          ]),
-          if (_error != null) Text(_error!, style: const TextStyle(color: Colors.red)),
-        ]),
-      );
+          Row(
+            children: [
+              Expanded(child: Text(_status)),
+              if (((!kIsWeb && _inputs.isNotEmpty) ||
+                      (kIsWeb && _inputsWeb.isNotEmpty)) &&
+                  !_running)
+                TextButton.icon(
+                  onPressed: () => setState(() {
+                    _inputs.clear();
+                    _inputsWeb.clear();
+                    _pct = 0;
+                    _status = 'Idle';
+                  }),
+                  icon: const Icon(Icons.clear_all),
+                  label: const Text('Clear'),
+                ),
+            ],
+          ),
+          if (_error != null)
+            Text(_error!, style: const TextStyle(color: Colors.red)),
+        ],
+      ),
+    );
   }
 }

@@ -26,97 +26,161 @@ class _ValidateStatsScreenState extends State<ValidateStatsScreen> {
     final f = File('${tmp.path}/large.txt')..writeAsStringSync('C' * 10000);
     final zip = '${tmp.path}/sample.zip';
     await _cli.create(zip, [f.path]);
-    setState(() { _archive = zip; });
+    setState(() {
+      _archive = zip;
+    });
   }
 
   Future<void> _pickArchive() async {
-    final f = await openFile(acceptedTypeGroups: const [XTypeGroup(label: 'ZIP', extensions: ['zip'])]);
+    final f = await openFile(
+      acceptedTypeGroups: const [
+        XTypeGroup(label: 'ZIP', extensions: ['zip']),
+      ],
+    );
     if (f == null) return;
     if (kIsWeb) {
       _webBytes = await f.readAsBytes();
       _webName = f.name;
       setState(() {});
     } else {
-      setState(() { _archive = f.path; });
+      setState(() {
+        _archive = f.path;
+      });
     }
   }
 
   Future<void> _runValidate() async {
-    setState(() { _status = 'Validating…'; _validate = 'Running'; });
+    setState(() {
+      _status = 'Validating…';
+      _validate = 'Running';
+    });
     if (kIsWeb) {
-      if (_webBytes == null) { setState(() { _status = 'Pick a ZIP'; _validate = 'Unknown'; }); return; }
+      if (_webBytes == null) {
+        setState(() {
+          _status = 'Pick a ZIP';
+          _validate = 'Unknown';
+        });
+        return;
+      }
       try {
         WebZipReadService().validate(_webBytes!);
-        setState(() { _validate = 'OK'; _status = 'Validated'; });
+        setState(() {
+          _validate = 'OK';
+          _status = 'Validated';
+        });
       } catch (e) {
-        setState(() { _validate = 'Failed'; _status = 'Failed: $e'; });
+        setState(() {
+          _validate = 'Failed';
+          _status = 'Failed: $e';
+        });
       }
     } else {
       if (_archive == null) return;
       await for (final evt in _cli.streamValidate(_archive!)) {
         if (evt['event'] == 'done') {
-          setState(() { _validate = 'OK'; _status = 'Validated'; });
+          setState(() {
+            _validate = 'OK';
+            _status = 'Validated';
+          });
         }
       }
     }
   }
 
   Future<void> _runStats() async {
-    setState(() { _status = 'Getting stats…'; });
+    setState(() {
+      _status = 'Getting stats…';
+    });
     if (kIsWeb) {
-      if (_webBytes == null) { setState(() { _status = 'Pick a ZIP'; }); return; }
+      if (_webBytes == null) {
+        setState(() {
+          _status = 'Pick a ZIP';
+        });
+        return;
+      }
       try {
         final data = WebZipReadService().stats(_webBytes!);
-        setState(() { _stats = data; _status = 'Done'; });
+        setState(() {
+          _stats = data;
+          _status = 'Done';
+        });
       } catch (e) {
-        setState(() { _status = 'Failed: $e'; });
+        setState(() {
+          _status = 'Failed: $e';
+        });
       }
     } else {
       if (_archive == null) return;
       final data = await _cli.statsJson(_archive!);
-      setState(() { _stats = data; _status = data != null ? 'Done' : 'Failed'; });
+      setState(() {
+        _stats = data;
+        _status = data != null ? 'Done' : 'Failed';
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            if (!kIsWeb) ...[
-              FilledButton.tonal(onPressed: _prepareSample, child: const Text('Sample')),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (!kIsWeb) ...[
+                FilledButton.tonal(
+                  onPressed: _prepareSample,
+                  child: const Text('Sample'),
+                ),
+                const SizedBox(width: 8),
+              ],
+              OutlinedButton.icon(
+                onPressed: _pickArchive,
+                icon: const Icon(Icons.upload_file),
+                label: const Text('Pick Archive'),
+              ),
               const SizedBox(width: 8),
+              FilledButton.tonal(
+                onPressed: _runValidate,
+                child: const Text('Validate'),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.tonal(
+                onPressed: _runStats,
+                child: const Text('Stats'),
+              ),
             ],
-            OutlinedButton.icon(onPressed: _pickArchive, icon: const Icon(Icons.upload_file), label: const Text('Pick Archive')),
-            const SizedBox(width: 8),
-            FilledButton.tonal(onPressed: _runValidate, child: const Text('Validate')),
-            const SizedBox(width: 8),
-            FilledButton.tonal(onPressed: _runStats, child: const Text('Stats')),
-          ]),
+          ),
           const SizedBox(height: 12),
-          Text('Archive: ${kIsWeb ? (_webName ?? '-') : (_archive ?? '-') }'),
+          Text('Archive: ${kIsWeb ? (_webName ?? '-') : (_archive ?? '-')}'),
           const SizedBox(height: 12),
-          Row(children: [
-            Chip(label: Text('Validate: $_validate')),
-          ]),
+          Row(children: [Chip(label: Text('Validate: $_validate'))]),
           const SizedBox(height: 12),
           if (_stats != null)
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(12),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Files: ${_stats!['file_count'] ?? '-'}'),
-                  Text('Directories: ${_stats!['dir_count'] ?? '-'}'),
-                  Text('Uncompressed: ${_stats!['total_uncompressed_size'] ?? '-'} bytes'),
-                  Text('Compressed: ${_stats!['total_compressed_size'] ?? '-'} bytes'),
-                  Text('Ratio: ${_stats!['compression_ratio'] ?? '-'}%'),
-                ]),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Files: ${_stats!['file_count'] ?? '-'}'),
+                    Text('Directories: ${_stats!['dir_count'] ?? '-'}'),
+                    Text(
+                      'Uncompressed: ${_stats!['total_uncompressed_size'] ?? '-'} bytes',
+                    ),
+                    Text(
+                      'Compressed: ${_stats!['total_compressed_size'] ?? '-'} bytes',
+                    ),
+                    Text('Ratio: ${_stats!['compression_ratio'] ?? '-'}%'),
+                  ],
+                ),
               ),
             ),
           const SizedBox(height: 8),
           Text(_status),
-        ]),
-      );
+        ],
+      ),
+    );
   }
 }
