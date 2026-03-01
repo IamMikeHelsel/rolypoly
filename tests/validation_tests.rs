@@ -2,24 +2,10 @@ use anyhow::Result;
 use std::fs;
 use tempfile::TempDir;
 
-// Helper to find binary
-fn get_binary_path() -> std::path::PathBuf {
-    let root = std::env::current_dir().unwrap();
-    let debug_bin = root.join("target/debug/rolypoly");
-    let release_bin = root.join("target/release/rolypoly");
-
-    if debug_bin.exists() {
-        return debug_bin;
-    }
-    if release_bin.exists() {
-        return release_bin;
-    }
-    // Assume cargo run if not found, but for these tests we prefer binary if built
-    std::path::PathBuf::from("cargo")
-}
+mod test_helpers;
 
 fn run_rolypoly(args: &[&str]) -> std::process::Output {
-    let bin = get_binary_path();
+    let bin = test_helpers::get_binary_path();
     if bin.to_string_lossy() == "cargo" {
          std::process::Command::new("cargo")
             .args(["run", "--bin", "rolypoly", "--"])
