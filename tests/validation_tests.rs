@@ -2,37 +2,7 @@ use anyhow::Result;
 use std::fs;
 use tempfile::TempDir;
 
-// Helper to find binary
-fn get_binary_path() -> std::path::PathBuf {
-    let root = std::env::current_dir().unwrap();
-    let debug_bin = root.join("target/debug/rolypoly");
-    let release_bin = root.join("target/release/rolypoly");
-
-    if debug_bin.exists() {
-        return debug_bin;
-    }
-    if release_bin.exists() {
-        return release_bin;
-    }
-    // Assume cargo run if not found, but for these tests we prefer binary if built
-    std::path::PathBuf::from("cargo")
-}
-
-fn run_rolypoly(args: &[&str]) -> std::process::Output {
-    let bin = get_binary_path();
-    if bin.to_string_lossy() == "cargo" {
-         std::process::Command::new("cargo")
-            .args(["run", "--bin", "rolypoly", "--"])
-            .args(args)
-            .output()
-            .expect("Failed to run cargo")
-    } else {
-        std::process::Command::new(bin)
-            .args(args)
-            .output()
-            .expect("Failed to run binary")
-    }
-}
+mod test_helpers;
 
 #[test]
 fn test_path_traversal_protection() -> Result<()> {
@@ -60,7 +30,7 @@ fn test_path_traversal_protection() -> Result<()> {
     }
 
     // Now try to extract it using rolypoly
-    let output = run_rolypoly(&[
+    let output = test_helpers::run_command(&[
         "extract",
         malicious_zip.to_str().unwrap(),
         "-o",
@@ -104,7 +74,7 @@ fn test_corrupted_archive() -> Result<()> {
     // Write junk
     fs::write(&corrupt_zip, b"PK\x03\x04This is not a valid zip file structure but looks like one maybe")?;
 
-    let output = run_rolypoly(&["validate", corrupt_zip.to_str().unwrap()]);
+    let output = test_helpers::run_command(&["validate", corrupt_zip.to_str().unwrap()]);
 
     assert!(!output.status.success(), "Should fail to validate corrupt archive");
     let stderr = String::from_utf8_lossy(&output.stderr);
@@ -131,7 +101,7 @@ fn test_symlink_handling() -> Result<()> {
 
         let archive_path = temp_dir.path().join("symlinks.zip");
 
-        let output = run_rolypoly(&[
+        let output = test_helpers::run_command(&[
             "create",
             archive_path.to_str().unwrap(),
             src_dir.to_str().unwrap(),
@@ -142,7 +112,7 @@ fn test_symlink_handling() -> Result<()> {
         let extract_dir = temp_dir.path().join("extract");
         fs::create_dir(&extract_dir)?;
 
-        let output = run_rolypoly(&[
+        let output = test_helpers::run_command(&[
             "extract",
             archive_path.to_str().unwrap(),
             "-o",
