@@ -32,7 +32,7 @@ jobs:
         run: cargo clippy --all-targets -- -D warnings
 
       - name: Audit
-        run: cargo audit --ignore RUSTSEC-0000-0000 || true
+        run: cargo audit
 
       - name: License/ban check
         run: cargo deny check

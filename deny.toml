@@ -1,6 +1,10 @@
-deny = ["unlicensed"]
-allow = []
-skip = []
+[advisories]
+vulnerability = "deny"
+unmaintained = "warn"
+unsound = "warn"
+yanked = "warn"
+notice = "warn"
+ignore = []
 
 [bans]
 multiple-versions = "warn"
