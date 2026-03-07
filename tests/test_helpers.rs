@@ -28,7 +28,7 @@ pub fn get_binary_path() -> PathBuf {
     PathBuf::from("cargo")
 }
 
-fn run_command(args: &[&str]) -> std::process::Output {
+pub fn run_command(args: &[&str]) -> std::process::Output {
     let bin = get_binary_path();
     if bin.to_string_lossy() == "cargo" {
          std::process::Command::new("cargo")
