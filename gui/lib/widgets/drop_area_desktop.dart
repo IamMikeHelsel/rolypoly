@@ -38,4 +38,3 @@ class _DropAreaState extends State<DropArea> {
     );
   }
 }
-

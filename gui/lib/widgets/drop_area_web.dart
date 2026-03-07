@@ -19,4 +19,3 @@ class DropArea extends StatelessWidget {
     );
   }
 }
-

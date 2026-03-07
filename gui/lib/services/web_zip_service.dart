@@ -11,4 +11,3 @@ class WebZipService {
     return Uint8List.fromList(data ?? <int>[]);
   }
 }
-
